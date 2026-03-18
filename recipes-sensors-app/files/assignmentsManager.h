@@ -2,6 +2,8 @@
 
 #include <map>
 #include <string>
+#include <limits>
+#include <cstdint>
 
 class AssignmentsManager {
 private:

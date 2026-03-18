@@ -8,7 +8,7 @@ class RealSensorProvider : public SensorInterface
 {
 private:
     std::string sensorPath;
-    std::vector<std::string> glob_search(const std::string& pattern);
+    std::vector<std::string> globSearch(const std::string& pattern);
     std::optional<float> readTemp(const std::string& sensorId);
     
 public:

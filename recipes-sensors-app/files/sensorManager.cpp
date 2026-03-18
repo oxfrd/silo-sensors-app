@@ -14,44 +14,30 @@ namespace fs = std::filesystem;
     EXTRA_OEMAKE = "CXXFLAGS='-std=c++17'"
 */
 
-struct SensorData {
-    std::string id;
-    std::optional<float> temp;
     
-    SensorData(const std::string& id, std::optional<float> temp = std::nullopt)
-        : id(id), temp(temp) {}
-};
+SensorManager::SensorManager(std::unique_ptr<SensorInterface> customProvider, bool mock) {
+    if (mock) {
+        provider = std::make_unique<MockSensorProvider>();
+    } else if (customProvider) {
+        provider = std::move(customProvider);
+    } else {
+        provider = std::make_unique<RealSensorProvider>();
+    }
+}
 
+std::vector<SensorData> SensorManager::scan() {
+    std::vector<SensorData> result;
+    auto ids = provider->scan();
+    for (const auto& id : ids) {
+        result.emplace_back(id);
+    }
+    return result;
+}
 
-class SensorManager {
-private:
-    std::unique_ptr<SensorInterface> provider;
-    
-public:
-    SensorManager(std::unique_ptr<SensorInterface> customProvider = nullptr, bool mock = false) {
-        if (mock) {
-            provider = std::make_unique<MockSensorProvider>();
-        } else if (customProvider) {
-            provider = std::move(customProvider);
-        } else {
-            provider = std::make_unique<RealSensorProvider>();
-        }
-    }
-    
-    std::vector<SensorData> scan() {
-        std::vector<SensorData> result;
-        auto ids = provider->scan();
-        for (const auto& id : ids) {
-            result.emplace_back(id);
-        }
-        return result;
-    }
-    
-    std::map<std::string, float> getTemps() {
-        return provider->getTemps();
-    }
-    
-    void setProvider(std::unique_ptr<SensorInterface> newProvider) {
-        provider = std::move(newProvider);
-    }
-};
+std::map<std::string, float> SensorManager::getTemps() {
+    return provider->getTemps();
+}
+
+void SensorManager::setProvider(std::unique_ptr<SensorInterface> newProvider) {
+    provider = std::move(newProvider);
+}
