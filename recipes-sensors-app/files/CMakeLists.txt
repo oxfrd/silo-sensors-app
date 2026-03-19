@@ -60,6 +60,7 @@ set(SOURCES
     assignmentsManager.cpp
     realSensorProvider.cpp
     mockSensorProvider.cpp
+    historyRecorder.cpp
     ${SENSOR_PROVIDER_SOURCE}
 )
 
@@ -69,6 +70,7 @@ set(HEADERS
     assignmentsManager.h
     realSensorProvider.h
     mockSensorProvider.h
+    historyRecorder.h
 )
 
 # ============================================================================
