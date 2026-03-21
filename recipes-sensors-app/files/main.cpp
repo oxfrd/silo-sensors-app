@@ -19,13 +19,19 @@ int main(int argc, char* argv[]) {
     auto sensors = manager.scan();
     std::cout << "Found sensors: " << sensors.size() << std::endl;
     
-    for (int i = 0; i < 15; ++i) {
+    for (;;) 
+    {
         auto temps = manager.getTemps();
-        std::cout << "Iteration " << i << ": " << temps.size() << " measurements" << std::endl;
-        for (const auto& [id, temp] : temps) {
+        std::cout << temps.size() << " measurements" << std::endl;
+        
+        for (const auto& [id, temp] : temps) 
+        {
             std::cout << "  Sensor " << id << ": " << temp << "°C" << std::endl;
+            
             measurementHistory.log(id, temp, 0);
+            
         }
+
         std::this_thread::sleep_for(std::chrono::seconds(1));
     }
     
