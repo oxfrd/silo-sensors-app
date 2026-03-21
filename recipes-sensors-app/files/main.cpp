@@ -14,8 +14,29 @@ int main(int argc, char* argv[]) {
         }
     }
 
+    AssignmentsManager assignmentsManager = AssignmentsManager();
     SensorManager manager(nullptr, useMockedSensors);
     HistoryRecorder measurementHistory("measurementsHistory.csv", 4);
+
+    auto assignments = assignmentsManager.get();
+    
+    std::cout << "Current sensor assignments:" << std::endl;
+    for (const auto& [id, silo] : assignments) {
+        std::cout << "  Sensor " << static_cast<int>(id) << ": " << silo << std::endl;
+    }
+
+    if (useMockedSensors && assignments.empty()) {
+        // If using mocked sensors and no assignments exist, create default ones
+        assignments = {
+            {0, "28ff123456789abc"},
+            {1, "28ffabcdef123456"},
+            {2, "28ffaabbccddeeff"},
+            {3, "28ff001122334455"}
+        };
+        assignmentsManager.set(assignments);
+        std::cout << "Created default sensor assignments for mocked sensors." << std::endl;
+    }
+
     auto sensors = manager.scan();
     std::cout << "Found sensors: " << sensors.size() << std::endl;
     
