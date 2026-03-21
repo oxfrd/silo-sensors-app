@@ -15,10 +15,16 @@ void AssignmentsManager::load() {
                 Json::Value json;
                 file >> json;
                 
+                if (!json.isArray()) {
+                    std::cerr << "ERROR: Loading assignments failed: value must be arrayValue" << std::endl;
+                    file.close();
+                    return;
+                }
+                
                 uint8_t count = 0;
-                for (auto& key : json.getMemberNames()) {
-                    if (!json[key].isNull()) {
-                        assignments.emplace(count, json[key].asString());
+                for (const auto& item : json) {
+                    if (!item.isNull() && item.isString()) {
+                        assignments.emplace(count, item.asString());
                         count++;
                     }
                 }
@@ -32,13 +38,16 @@ void AssignmentsManager::load() {
 
     
 AssignmentsManager::AssignmentsManager(const std::string& file)
-    : storage_file(file) {}
+    : storage_file(file) 
+    {
+        load();
+    }
 
 void AssignmentsManager::save() {
     try {
-        Json::Value json;
+        Json::Value json(Json::arrayValue);
         for (const auto& [key, value] : assignments) {
-            json[key] = value.empty() ? Json::nullValue : Json::Value(value);
+            json.append(value.empty() ? Json::nullValue : Json::Value(value));
         }
         
         std::ofstream file(storage_file);
