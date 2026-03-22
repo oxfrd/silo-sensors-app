@@ -1,7 +1,7 @@
-#include <filesystem>
 #include "sensorManager.h"
-#include "realSensorProvider.h"
 #include "mockSensorProvider.h"
+#include "realSensorProvider.h"
+#include <filesystem>
 
 namespace fs = std::filesystem;
 
@@ -14,30 +14,39 @@ namespace fs = std::filesystem;
     EXTRA_OEMAKE = "CXXFLAGS='-std=c++17'"
 */
 
-    
-SensorManager::SensorManager(std::unique_ptr<SensorInterface> customProvider, bool mock) {
-    if (mock) {
+SensorManager::SensorManager(std::unique_ptr<SensorInterface> customProvider, bool mock)
+{
+    if (mock)
+    {
         provider = std::make_unique<MockSensorProvider>();
-    } else if (customProvider) {
+    }
+    else if (customProvider)
+    {
         provider = std::move(customProvider);
-    } else {
+    }
+    else
+    {
         provider = std::make_unique<RealSensorProvider>();
     }
 }
 
-std::vector<SensorData> SensorManager::scan() {
+std::vector<SensorData> SensorManager::scan()
+{
     std::vector<SensorData> result;
     auto ids = provider->scan();
-    for (const auto& id : ids) {
+    for (const auto &id : ids)
+    {
         result.emplace_back(id);
     }
     return result;
 }
 
-std::map<std::string, float> SensorManager::getTemps() {
+std::map<std::string, float> SensorManager::getTemps()
+{
     return provider->getTemps();
 }
 
-void SensorManager::setProvider(std::unique_ptr<SensorInterface> newProvider) {
+void SensorManager::setProvider(std::unique_ptr<SensorInterface> newProvider)
+{
     provider = std::move(newProvider);
 }

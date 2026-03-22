@@ -1,15 +1,18 @@
+#include "assignmentsManager.h"
+#include "historyRecorder.h"
+#include "sensorManager.h"
 #include <iostream>
 #include <thread>
-#include "assignmentsManager.h"
-#include "sensorManager.h"
-#include "historyRecorder.h"
 
-int main(int argc, char* argv[]) {
+int main(int argc, char *argv[])
+{
     bool useMockedSensors = false;
-    
-    if (argc > 1) {
+
+    if (argc > 1)
+    {
         std::string arg = argv[1];
-        if (arg == "mocked") {
+        if (arg == "mocked")
+        {
             useMockedSensors = true;
         }
     }
@@ -19,20 +22,18 @@ int main(int argc, char* argv[]) {
     HistoryRecorder measurementHistory("measurementsHistory.csv", 4);
 
     auto assignments = assignmentsManager.get();
-    
+
     std::cout << "Current sensor assignments:" << std::endl;
-    for (const auto& [id, silo] : assignments) {
+    for (const auto &[id, silo] : assignments)
+    {
         std::cout << "  Sensor " << static_cast<int>(id) << ": " << silo << std::endl;
     }
 
-    if (useMockedSensors && assignments.empty()) {
+    if (useMockedSensors && assignments.empty())
+    {
         // If using mocked sensors and no assignments exist, create default ones
         assignments = {
-            {0, "28ff123456789abc"},
-            {1, "28ffabcdef123456"},
-            {2, "28ffaabbccddeeff"},
-            {3, "28ff001122334455"}
-        };
+            {0, "28ff123456789abc"}, {1, "28ffabcdef123456"}, {2, "28ffaabbccddeeff"}, {3, "28ff001122334455"}};
         assignmentsManager.set(assignments);
         std::cout << "Created default sensor assignments for mocked sensors." << std::endl;
     }
@@ -58,21 +59,20 @@ int main(int argc, char* argv[]) {
         }
     }
 
-    for (;;) 
+    for (;;)
     {
         auto temps = manager.getTemps();
         std::cout << temps.size() << " measurements" << std::endl;
-        
-        for (const auto& [id, temp] : temps) 
+
+        for (const auto &[id, temp] : temps)
         {
             std::cout << "  Sensor " << id << ": " << temp << "°C" << std::endl;
-            
+
             measurementHistory.log(id, temp, 0);
-            
         }
 
         std::this_thread::sleep_for(std::chrono::seconds(1));
     }
-    
+
     return 0;
 }

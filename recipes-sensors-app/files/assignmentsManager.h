@@ -1,12 +1,13 @@
 #pragma once
 
+#include <cstdint>
+#include <limits>
 #include <map>
 #include <string>
-#include <limits>
-#include <cstdint>
 
-class AssignmentsManager {
-private:
+class AssignmentsManager
+{
+  private:
     static constexpr std::uint8_t MAX_SENSORS_COUNT = std::numeric_limits<std::uint8_t>::max();
 
     std::string storage_file;
@@ -14,11 +15,11 @@ private:
     std::map<uint8_t, std::string> assignments;
 
     void load();
-    
-public:
-    AssignmentsManager(const std::string& file = "silo_assignments.json");
-    
+
+  public:
+    AssignmentsManager(const std::string &file = "silo_assignments.json");
+
     void save();
     std::map<uint8_t, std::string> get();
-    void set(const std::map<uint8_t, std::string>& newAssignments);
+    void set(const std::map<uint8_t, std::string> &newAssignments);
 };
