@@ -1,6 +1,8 @@
 #include "assignmentsManager.h"
 #include "historyRecorder.h"
 #include "sensorManager.h"
+#include "alarmManager.h"
+#include "alarmCodes.h"
 #include <iostream>
 #include <thread>
 
@@ -20,6 +22,7 @@ int main(int argc, char *argv[])
     AssignmentsManager assignmentsManager = AssignmentsManager();
     SensorManager manager(nullptr, useMockedSensors);
     HistoryRecorder measurementHistory("measurementsHistory.csv", 4);
+    AlarmManager alarmManager = AlarmManager();
 
     auto assignments = assignmentsManager.get();
 
@@ -56,6 +59,7 @@ int main(int argc, char *argv[])
         if (!found)
         {
             std::cerr << "Warning: Sensor " << sensorId << " is assigned to silo but not found." << std::endl;
+            alarmManager.addAlarmState(sensorId, AlarmCode::SENSOR_DISCONNECTED, 0.0f);
         }
     }
 
@@ -69,6 +73,20 @@ int main(int argc, char *argv[])
             std::cout << "  Sensor " << id << ": " << temp << "°C" << std::endl;
 
             measurementHistory.log(id, temp, 0);
+        }
+
+        if (alarmManager.getActiveAlarmCount() > 0)
+        {
+            std::cout << "Active alarms: " << alarmManager.getActiveAlarmCount() << std::endl;
+            auto activeAlarms = alarmManager.getActiveAlarms();
+            for (const auto &alarm : activeAlarms)
+            {
+                std::cout << "  Sensor '" << alarm.sensorId << "' alarm code: " << static_cast<int>(alarm.code) << std::endl;
+            }
+        }
+        else
+        {
+            std::cout << "No active alarms." << std::endl;
         }
 
         std::this_thread::sleep_for(std::chrono::seconds(1));
