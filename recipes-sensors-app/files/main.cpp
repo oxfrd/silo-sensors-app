@@ -39,7 +39,25 @@ int main(int argc, char* argv[]) {
 
     auto sensors = manager.scan();
     std::cout << "Found sensors: " << sensors.size() << std::endl;
-    
+
+    for (const auto &[webId, sensorId] : assignments)
+    {
+        bool found = false;
+        for (const auto &id : sensors)
+        {
+            if (sensorId == id.id)
+            {
+                found = true;
+                break;
+            }
+        }
+
+        if (!found)
+        {
+            std::cerr << "Warning: Sensor " << sensorId << " is assigned to silo but not found." << std::endl;
+        }
+    }
+
     for (;;) 
     {
         auto temps = manager.getTemps();
