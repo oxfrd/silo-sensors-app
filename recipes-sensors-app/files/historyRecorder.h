@@ -1,12 +1,13 @@
 #pragma once
 
+#include "iHistoryRecorder.h"
 #include "sensorInterface.h"
 #include <cstdint>
 #include <fstream>
 #include <mutex>
 #include <string>
 
-class HistoryRecorder
+class HistoryRecorder : public IHistoryRecorder
 {
   private:
     std::mutex mutex;
@@ -18,5 +19,5 @@ class HistoryRecorder
   public:
     HistoryRecorder(const std::string &filename, const uint32_t savingInterval = 10);
 
-    void log(const std::string &sensorID, const float temperatureInCelsius, const uint16_t alarmCode);
+    void log(const std::string &sensorID, const float temperatureInCelsius, const uint16_t alarmCode) override;
 };

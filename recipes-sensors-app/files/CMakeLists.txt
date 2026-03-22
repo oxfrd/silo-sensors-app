@@ -62,18 +62,29 @@ set(SOURCES
     mockSensorProvider.cpp
     historyRecorder.cpp
     alarmManager.cpp
-    ${SENSOR_PROVIDER_SOURCE}
+    temperatureMonitor.cpp
+    monitoringService.cpp
+    sensorValidator.cpp
 )
 
 set(HEADERS
     sensorInterface.h
     sensorManager.h
+    sensorData.h
+    sensorAlarmState.h
     assignmentsManager.h
     realSensorProvider.h
     mockSensorProvider.h
     historyRecorder.h
     alarmManager.h
     alarmCodes.h
+    temperatureMonitor.h
+    monitoringService.h
+    sensorValidator.h
+    iAssignmentsManager.h
+    iAlarmManager.h
+    iHistoryRecorder.h
+    iSensorManager.h
 )
 
 # ============================================================================

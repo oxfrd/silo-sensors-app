@@ -16,6 +16,7 @@ void AssignmentsManager::load()
             std::ifstream file(storage_file);
             if (file.is_open())
             {
+                assignments.clear();
                 Json::Value json;
                 file >> json;
 
@@ -73,8 +74,13 @@ void AssignmentsManager::save()
     }
 }
 
-std::map<uint8_t, std::string> AssignmentsManager::get()
+std::map<uint8_t, std::string> AssignmentsManager::get(bool fileReload)
 {
+    if (fileReload)
+    {
+        load();
+    }
+
     return assignments;
 }
 

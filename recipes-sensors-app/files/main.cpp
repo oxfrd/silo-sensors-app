@@ -1,10 +1,5 @@
-#include "assignmentsManager.h"
-#include "historyRecorder.h"
-#include "sensorManager.h"
-#include "alarmManager.h"
-#include "alarmCodes.h"
+#include "monitoringService.h"
 #include <iostream>
-#include <thread>
 
 int main(int argc, char *argv[])
 {
@@ -19,77 +14,16 @@ int main(int argc, char *argv[])
         }
     }
 
-    AssignmentsManager assignmentsManager = AssignmentsManager();
-    SensorManager manager(nullptr, useMockedSensors);
-    HistoryRecorder measurementHistory("measurementsHistory.csv", 4);
-    AlarmManager alarmManager = AlarmManager();
-
-    auto assignments = assignmentsManager.get();
-
-    std::cout << "Current sensor assignments:" << std::endl;
-    for (const auto &[id, silo] : assignments)
+    try
     {
-        std::cout << "  Sensor " << static_cast<int>(id) << ": " << silo << std::endl;
+        MonitoringService service(useMockedSensors);
+        service.initialize();
+        service.run();
     }
-
-    if (useMockedSensors && assignments.empty())
+    catch (const std::exception &e)
     {
-        // If using mocked sensors and no assignments exist, create default ones
-        assignments = {
-            {0, "28ff123456789abc"}, {1, "28ffabcdef123456"}, {2, "28ffaabbccddeeff"}, {3, "28ff001122334455"}};
-        assignmentsManager.set(assignments);
-        std::cout << "Created default sensor assignments for mocked sensors." << std::endl;
-    }
-
-    auto sensors = manager.scan();
-    std::cout << "Found sensors: " << sensors.size() << std::endl;
-
-    for (const auto &[webId, sensorId] : assignments)
-    {
-        bool found = false;
-        for (const auto &id : sensors)
-        {
-            if (sensorId == id.id)
-            {
-                found = true;
-                break;
-            }
-        }
-
-        if (!found)
-        {
-            std::cerr << "Warning: Sensor " << sensorId << " is assigned to silo but not found." << std::endl;
-            alarmManager.addAlarmState(sensorId, AlarmCode::SENSOR_DISCONNECTED, 0.0f);
-        }
-    }
-
-    for (;;)
-    {
-        auto temps = manager.getTemps();
-        std::cout << temps.size() << " measurements" << std::endl;
-
-        for (const auto &[id, temp] : temps)
-        {
-            std::cout << "  Sensor " << id << ": " << temp << "°C" << std::endl;
-
-            measurementHistory.log(id, temp, 0);
-        }
-
-        if (alarmManager.getActiveAlarmCount() > 0)
-        {
-            std::cout << "Active alarms: " << alarmManager.getActiveAlarmCount() << std::endl;
-            auto activeAlarms = alarmManager.getActiveAlarms();
-            for (const auto &alarm : activeAlarms)
-            {
-                std::cout << "  Sensor '" << alarm.sensorId << "' alarm code: " << static_cast<int>(alarm.code) << std::endl;
-            }
-        }
-        else
-        {
-            std::cout << "No active alarms." << std::endl;
-        }
-
-        std::this_thread::sleep_for(std::chrono::seconds(1));
+        std::cerr << "Error: " << e.what() << std::endl;
+        return 1;
     }
 
     return 0;
