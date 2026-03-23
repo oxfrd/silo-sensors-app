@@ -1,8 +1,2 @@
-recipe-web/backend/__pycache__/sensors.cpython-312.pyc
-recipe-web/backend/silo_assignments.json
-.venv/
-venv/
 silo_assignments.json
-__pycache__/
-wpa_supplicant-nl80211-wlan0.conf
 build/
