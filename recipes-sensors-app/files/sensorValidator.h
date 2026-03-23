@@ -3,6 +3,8 @@
 #include "iAlarmManager.h"
 #include "iAssignmentsManager.h"
 #include "iSensorManager.h"
+#include "sensorData.h"
+#include <vector>
 
 class SensorValidator
 {
@@ -10,6 +12,8 @@ class SensorValidator
     IAssignmentsManager &assignmentsManager;
     ISensorManager &sensorManager;
     IAlarmManager &alarmManager;
+
+    void clearAlarmsForNotExistingSensors(const std::vector<SensorData> &sensors);
 
   public:
     SensorValidator(IAssignmentsManager &assignments, ISensorManager &manager, IAlarmManager &alarms);

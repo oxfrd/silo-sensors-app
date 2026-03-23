@@ -37,6 +37,48 @@ void SensorValidator::validateAssignedSensors()
             alarmManager.clearAlarm(sensorId);
         }
     }
+
+    clearAlarmsForNotExistingSensors(sensors);
+}
+
+void SensorValidator::clearAlarmsForNotExistingSensors(const std::vector<SensorData> &sensors)
+{
+    auto activeAlarms = alarmManager.getActiveAlarms();
+    auto assignments = assignmentsManager.get();
+
+    for (const auto &alarm : activeAlarms)
+    {
+        bool sensorInAssignments = false;
+        bool sensorAvailable = false;
+
+        // check if sensor is in assignments
+        for (const auto &[id, sensorId] : assignments)
+        {
+            if (alarm.sensorId == sensorId)
+            {
+                sensorInAssignments = true;
+                break;
+            }
+        }
+
+        // check if sensor is available (in the sensors list)
+        for (const auto &sensor : sensors)
+        {
+            if (alarm.sensorId == sensor.id)
+            {
+                sensorAvailable = true;
+                break;
+            }
+        }
+
+        // Clear alarm only if sensor is NOT in assignments AND NOT available
+        if (!sensorInAssignments && !sensorAvailable)
+        {
+            std::cerr << "Warning: Sensor '" << alarm.sensorId << "' has alarm but not in assignments and not available. Clearing."
+                      << std::endl;
+            alarmManager.clearAlarm(alarm.sensorId);
+        }
+    }
 }
 
 void SensorValidator::printSensorInfo()
