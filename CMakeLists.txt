@@ -28,10 +28,10 @@ endif()
 if(USE_REAL_SENSORS)
     message(STATUS "Using REAL SENSOR provider (DS18B20)")
     add_compile_definitions(USE_REAL_SENSORS)
-    set(SENSOR_PROVIDER_SOURCE "realSensorProvider.cpp")
+    set(SENSOR_PROVIDER_SOURCE "src/sensors/realSensorProvider.cpp")
 else()
     message(STATUS "Using MOCK SENSOR provider")
-    set(SENSOR_PROVIDER_SOURCE "mockSensorProvider.cpp")
+    set(SENSOR_PROVIDER_SOURCE "src/sensors/mockSensorProvider.cpp")
 endif()
 
 # ============================================================================
@@ -54,49 +54,101 @@ find_package(Threads REQUIRED)
 # ============================================================================
 # Source Files
 # ============================================================================
-set(SOURCES
-    main.cpp
-    sensorManager.cpp
-    assignmentsManager.cpp
-    realSensorProvider.cpp
-    mockSensorProvider.cpp
-    historyRecorder.cpp
-    alarmManager.cpp
-    temperatureMonitor.cpp
-    monitoringService.cpp
-    sensorValidator.cpp
+set(CORE_SOURCES
+    src/core/monitoringService.cpp
+    src/core/temperatureMonitor.cpp
 )
 
-set(HEADERS
-    sensorInterface.h
-    sensorManager.h
-    sensorData.h
-    sensorAlarmState.h
-    assignmentsManager.h
-    realSensorProvider.h
-    mockSensorProvider.h
-    historyRecorder.h
-    alarmManager.h
-    alarmCodes.h
-    temperatureMonitor.h
-    monitoringService.h
-    sensorValidator.h
-    iAssignmentsManager.h
-    iAlarmManager.h
-    iHistoryRecorder.h
-    iSensorManager.h
+set(SENSORS_SOURCES
+    src/sensors/sensorManager.cpp
+    src/sensors/sensorValidator.cpp
+    src/sensors/mockSensorProvider.cpp
+    src/sensors/realSensorProvider.cpp
+)
+
+set(ALARMS_SOURCES
+    src/alarms/alarmManager.cpp
+)
+
+set(ASSIGNMENTS_SOURCES
+    src/assignments/assignmentsManager.cpp
+)
+
+set(HISTORY_SOURCES
+    src/history/historyRecorder.cpp
+)
+
+set(MAIN_SOURCES
+    src/main.cpp
+)
+
+set(ALL_SOURCES
+    ${MAIN_SOURCES}
+    ${CORE_SOURCES}
+    ${SENSORS_SOURCES}
+    ${ALARMS_SOURCES}
+    ${ASSIGNMENTS_SOURCES}
+    ${HISTORY_SOURCES}
+)
+
+# ============================================================================
+# Header Files
+# ============================================================================
+set(CORE_HEADERS
+    include/core/monitoringService.h
+    include/core/temperatureMonitor.h
+)
+
+set(SENSORS_HEADERS
+    include/sensors/sensorInterface.h
+    include/sensors/sensorManager.h
+    include/sensors/sensorData.h
+    include/sensors/sensorValidator.h
+    include/sensors/mockSensorProvider.h
+    include/sensors/realSensorProvider.h
+    include/sensors/iSensorManager.h
+)
+
+set(ALARMS_HEADERS
+    include/alarms/iAlarmManager.h
+    include/alarms/alarmManager.h
+    include/alarms/alarmCodes.h
+    include/alarms/sensorAlarmState.h
+)
+
+set(ASSIGNMENTS_HEADERS
+    include/assignments/iAssignmentsManager.h
+    include/assignments/assignmentsManager.h
+)
+
+set(HISTORY_HEADERS
+    include/history/iHistoryRecorder.h
+    include/history/historyRecorder.h
+)
+
+set(ALL_HEADERS
+    ${CORE_HEADERS}
+    ${SENSORS_HEADERS}
+    ${ALARMS_HEADERS}
+    ${ASSIGNMENTS_HEADERS}
+    ${HISTORY_HEADERS}
 )
 
 # ============================================================================
 # Executable
 # ============================================================================
-add_executable(sensor-app ${SOURCES} ${HEADERS})
+add_executable(sensor-app ${ALL_SOURCES} ${ALL_HEADERS})
 
 # ============================================================================
 # Include Directories
 # ============================================================================
 target_include_directories(sensor-app PRIVATE
-    ${CMAKE_CURRENT_SOURCE_DIR}
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/core
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/sensors
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/alarms
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/assignments
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/history
     ${JSONCPP_INCLUDE_DIRS}
 )
 
@@ -121,6 +173,11 @@ endif()
 # ============================================================================
 install(TARGETS sensor-app
     RUNTIME DESTINATION bin
+)
+
+install(FILES config/silo_assignments.json
+    DESTINATION etc/silo-monitor
+    OPTIONAL
 )
 
 # ============================================================================
