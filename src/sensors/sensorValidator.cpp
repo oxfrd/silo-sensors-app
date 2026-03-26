@@ -33,7 +33,6 @@ void SensorValidator::validateAssignedSensors()
         }
         else
         {
-            std::cout << "!!!!!!!!!!!!CLEAR ALARM!!!!!!!!!!!!." << std::endl;
             alarmManager.clearAlarm(sensorId);
         }
     }
