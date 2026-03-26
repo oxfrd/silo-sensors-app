@@ -137,12 +137,12 @@ set(ALL_HEADERS
 # ============================================================================
 # Executable
 # ============================================================================
-add_executable(sensor-app ${ALL_SOURCES} ${ALL_HEADERS})
+add_executable(silo-monitor-sensors-app ${ALL_SOURCES} ${ALL_HEADERS})
 
 # ============================================================================
 # Include Directories
 # ============================================================================
-target_include_directories(sensor-app PRIVATE
+target_include_directories(silo-monitor-sensors-app PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/include
     ${CMAKE_CURRENT_SOURCE_DIR}/include/core
     ${CMAKE_CURRENT_SOURCE_DIR}/include/sensors
@@ -155,7 +155,7 @@ target_include_directories(sensor-app PRIVATE
 # ============================================================================
 # Link Libraries
 # ============================================================================
-target_link_libraries(sensor-app PRIVATE
+target_link_libraries(silo-monitor-sensors-app PRIVATE
     ${JSONCPP_LIBRARIES}
     Threads::Threads
     stdc++fs
@@ -165,13 +165,13 @@ target_link_libraries(sensor-app PRIVATE
 # Compiler Flags
 # ============================================================================
 if(UNIX AND NOT APPLE)
-    target_compile_options(sensor-app PRIVATE -fPIC)
+    target_compile_options(silo-monitor-sensors-app PRIVATE -fPIC)
 endif()
 
 # ============================================================================
 # Installation
 # ============================================================================
-install(TARGETS sensor-app
+install(TARGETS silo-monitor-sensors-app
     RUNTIME DESTINATION bin
 )
 
