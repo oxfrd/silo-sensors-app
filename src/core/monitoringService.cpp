@@ -34,11 +34,6 @@ void MonitoringService::initialize()
 
     std::cout << "Monitoring service initialized." << std::endl;
 
-    // add transport layer initialization here
-    dataTransport = std::make_unique<UdsServer>("/run/silo-monitor.sock", *this);
-    dataTransport->start();
-
-
     start();
 }
 
@@ -69,11 +64,6 @@ void MonitoringService::run()
 void MonitoringService::stop()
 {
     std::cout << "Stopping monitoring service..." << std::endl;
-    if (dataTransport) 
-    {
-        dataTransport->stop();
-        dataTransport.reset();
-    }
     running = false;
 }
 

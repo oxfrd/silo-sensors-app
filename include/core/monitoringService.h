@@ -20,7 +20,6 @@ class MonitoringService : public ISnapshotProvider
     std::unique_ptr<HistoryRecorder> historyRecorder;
     std::unique_ptr<SensorValidator> sensorValidator;
     std::unique_ptr<TemperatureMonitor> temperatureMonitor;
-    std::unique_ptr<UdsServer> dataTransport;
     bool running = false;
     int validationCounter = 0;
     mutable std::mutex dataMutex_;
