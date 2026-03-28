@@ -34,6 +34,11 @@ void MonitoringService::initialize()
 
     std::cout << "Monitoring service initialized." << std::endl;
 
+    // add transport layer initialization here
+    dataTransport = std::make_unique<UdsServer>("/run/silo-monitor.sock", *this);
+    dataTransport->start();
+
+
     start();
 }
 
@@ -45,6 +50,9 @@ void MonitoringService::run()
     {
         temperatureMonitor->recordTemperatures();
         temperatureMonitor->printAlarmStatus();
+        
+        std::lock_guard<std::mutex> lock(dataMutex_);
+        //TODO: save data here which will be transported
 
         // Validate sensors each 5 seconds
         validationCounter++;
@@ -61,6 +69,11 @@ void MonitoringService::run()
 void MonitoringService::stop()
 {
     std::cout << "Stopping monitoring service..." << std::endl;
+    if (dataTransport) 
+    {
+        dataTransport->stop();
+        dataTransport.reset();
+    }
     running = false;
 }
 
@@ -68,4 +81,16 @@ void MonitoringService::start()
 {
     std::cout << "Starting monitoring service..." << std::endl;
     running = true;
+}
+
+Json::Value MonitoringService::getSnapshot() const 
+{
+    //example of implementation, TODO: expansion to real data
+    std::lock_guard<std::mutex> lock(dataMutex_);
+
+    Json::Value root;
+    root["temperature"] = 23;
+    root["humidity"] = 80;
+    root["alarmActive"] = 0;
+    return root;
 }
