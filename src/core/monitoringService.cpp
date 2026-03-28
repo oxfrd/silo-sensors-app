@@ -19,8 +19,6 @@ void MonitoringService::initialize()
 {
     std::cout << "Initializing monitoring service..." << std::endl;
 
-    sensorValidator->printSensorInfo();
-
     auto assignments = assignmentsManager->get();
     if (assignments.empty())
     {

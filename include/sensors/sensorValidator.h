@@ -9,19 +9,18 @@
 class SensorValidator
 {
   private:
+    static constexpr auto cAbsentSensorsCleanupInterval = std::chrono::seconds(30);
     IAssignmentsManager &assignmentsManager;
     ISensorManager &sensorManager;
     IAlarmManager &alarmManager;
+    std::map<uint8_t, std::string> assignments_;
+    std::chrono::steady_clock::time_point lastValidation_;
 
     void clearAlarmsForNotExistingSensors(const std::vector<SensorData> &sensors);
+    void printSensorInfo(const std::vector<SensorData> &sensors);
 
   public:
     SensorValidator(IAssignmentsManager &assignments, ISensorManager &manager, IAlarmManager &alarms);
 
-    // Sprawdza czy wszystkie przypisane sensory są podłączone
-    // Zgłasza alarm jeśli jakiś sensor nie odpowiada
-    void validateAssignedSensors();
-
-    // Wyświetla informacje o sensorach
-    void printSensorInfo();
+    void validateAssignedSensors(bool printInfo = false);
 };

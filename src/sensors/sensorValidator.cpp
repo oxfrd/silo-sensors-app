@@ -7,14 +7,15 @@
 SensorValidator::SensorValidator(IAssignmentsManager &assignments, ISensorManager &manager, IAlarmManager &alarms)
     : assignmentsManager(assignments), sensorManager(manager), alarmManager(alarms)
 {
+    lastValidation_ = std::chrono::steady_clock::now();
 }
 
-void SensorValidator::validateAssignedSensors()
+void SensorValidator::validateAssignedSensors(bool printInfo)
 {
-    auto assignments = assignmentsManager.get(true);
+    assignments_ = assignmentsManager.get(true);
     auto sensors = sensorManager.scan();
 
-    for (const auto &[webId, sensorId] : assignments)
+    for (const auto &[webId, sensorId] : assignments_)
     {
         bool found = false;
         for (const auto &id : sensors)
@@ -28,7 +29,7 @@ void SensorValidator::validateAssignedSensors()
 
         if (!found)
         {
-            std::cerr << "Warning: Sensor '" << sensorId << "' is assigned but not found." << std::endl;
+            std::cerr << "Warning: Sensor '" << sensorId << "' is assigned but unconnected." << std::endl;
             alarmManager.addAlarmState(sensorId, AlarmCode::SENSOR_DISCONNECTED, 0.0f);
         }
         else
@@ -37,13 +38,25 @@ void SensorValidator::validateAssignedSensors()
         }
     }
 
+    if (printInfo)
+    {
+        printSensorInfo(sensors);
+    }
+
     clearAlarmsForNotExistingSensors(sensors);
 }
 
 void SensorValidator::clearAlarmsForNotExistingSensors(const std::vector<SensorData> &sensors)
 {
+    auto now = std::chrono::steady_clock::now();
+    if (now - lastValidation_ < cAbsentSensorsCleanupInterval)
+    {
+        return;
+    }
+    
+    lastValidation_ = now;
+
     auto activeAlarms = alarmManager.getActiveAlarms();
-    auto assignments = assignmentsManager.get();
 
     for (const auto &alarm : activeAlarms)
     {
@@ -51,7 +64,7 @@ void SensorValidator::clearAlarmsForNotExistingSensors(const std::vector<SensorD
         bool sensorAvailable = false;
 
         // check if sensor is in assignments
-        for (const auto &[id, sensorId] : assignments)
+        for (const auto &[id, sensorId] : assignments_)
         {
             if (alarm.sensorId == sensorId)
             {
@@ -80,13 +93,10 @@ void SensorValidator::clearAlarmsForNotExistingSensors(const std::vector<SensorD
     }
 }
 
-void SensorValidator::printSensorInfo()
+void SensorValidator::printSensorInfo(const std::vector<SensorData> &sensors)
 {
-    auto assignments = assignmentsManager.get();
-    auto sensors = sensorManager.scan();
-
     std::cout << "Current sensor assignments:" << std::endl;
-    for (const auto &[id, silo] : assignments)
+    for (const auto &[id, silo] : assignments_)
     {
         std::cout << "  Sensor " << static_cast<int>(id) << ": " << silo << std::endl;
     }
