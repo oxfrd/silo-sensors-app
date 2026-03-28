@@ -78,6 +78,10 @@ set(HISTORY_SOURCES
     src/history/historyRecorder.cpp
 )
 
+set(COMMUNICATION_SOURCES
+    src/communication/udsServer.cpp
+)
+
 set(MAIN_SOURCES
     src/main.cpp
 )
@@ -89,6 +93,7 @@ set(ALL_SOURCES
     ${ALARMS_SOURCES}
     ${ASSIGNMENTS_SOURCES}
     ${HISTORY_SOURCES}
+    ${COMMUNICATION_SOURCES}
 )
 
 # ============================================================================
@@ -126,12 +131,18 @@ set(HISTORY_HEADERS
     include/history/historyRecorder.h
 )
 
+set(COMMUNICATION_HEADERS
+    include/communication/iSnapshotProvider.h
+    include/communication/udsServer.h
+)
+
 set(ALL_HEADERS
     ${CORE_HEADERS}
     ${SENSORS_HEADERS}
     ${ALARMS_HEADERS}
     ${ASSIGNMENTS_HEADERS}
     ${HISTORY_HEADERS}
+    ${COMMUNICATION_HEADERS}
 )
 
 # ============================================================================
@@ -149,6 +160,7 @@ target_include_directories(silo-monitor-sensors-app PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/include/alarms
     ${CMAKE_CURRENT_SOURCE_DIR}/include/assignments
     ${CMAKE_CURRENT_SOURCE_DIR}/include/history
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/communication
     ${JSONCPP_INCLUDE_DIRS}
 )
 

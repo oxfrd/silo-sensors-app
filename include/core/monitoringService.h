@@ -6,9 +6,12 @@
 #include "sensorManager.h"
 #include "sensorValidator.h"
 #include "temperatureMonitor.h"
+
+#include "iSnapshotProvider.h"
+#include "udsServer.h"
 #include <memory>
 
-class MonitoringService
+class MonitoringService : public ISnapshotProvider
 {
   private:
     std::unique_ptr<AssignmentsManager> assignmentsManager;
@@ -17,9 +20,10 @@ class MonitoringService
     std::unique_ptr<HistoryRecorder> historyRecorder;
     std::unique_ptr<SensorValidator> sensorValidator;
     std::unique_ptr<TemperatureMonitor> temperatureMonitor;
+    std::unique_ptr<UdsServer> dataTransport;
     bool running = false;
     int validationCounter = 0;
-
+    mutable std::mutex dataMutex_;
   public:
     MonitoringService(bool useMockedSensors = false);
 
@@ -27,4 +31,5 @@ class MonitoringService
     void run();
     void stop();
     void start();
+    Json::Value getSnapshot() const override;
 };
