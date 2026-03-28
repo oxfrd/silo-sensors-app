@@ -9,8 +9,8 @@
 #include <iostream>
 #include <json/json.h>
 
-UdsServer::UdsServer(std::string socketPath, ISnapshotProvider& provider)
-    : socketPath_(std::move(socketPath)), provider_(provider) {}
+UdsServer::UdsServer(std::string socketPath, ISnapshotProvider& provider, std::chrono::milliseconds minInterval)
+    : socketPath_(std::move(socketPath)), provider_(provider), minInterval_(minInterval) {}
 
 UdsServer::~UdsServer() {
     stop();
@@ -50,12 +50,12 @@ bool UdsServer::createAndBindSocket() {
     std::strncpy(addr.sun_path, socketPath_.c_str(), sizeof(addr.sun_path) - 1);
 
     if (bind(serverFd_, reinterpret_cast<sockaddr*>(&addr), sizeof(addr)) < 0) {
-        std::cerr << "bind() failed: " << strerror(errno) << "\n";
+        std::cerr << "[Socket] bind() failed: " << strerror(errno) << "\n";
         return false;
     }
 
     if (listen(serverFd_, 5) < 0) {
-        std::cerr << "listen() failed: " << strerror(errno) << "\n";
+        std::cerr << "[Socket] listen() failed: " << strerror(errno) << "\n";
         return false;
     }
 
@@ -76,12 +76,22 @@ void UdsServer::loop() {
         return;
     }
 
+    using clock = std::chrono::steady_clock;
+    lastSendTime_ = clock::now() - minInterval_;
+
     while (running_) {
         int clientFd = accept(serverFd_, nullptr, nullptr);
         if (clientFd < 0) {
             if (running_) {
-                std::cerr << "accept() failed: " << strerror(errno) << "\n";
+                std::cerr << "[Socket] accept() failed: " << strerror(errno) << "\n";
             }
+            continue;
+        }
+
+        auto now = clock::now();
+        if (now - lastSendTime_ < minInterval_) {
+            std::cout << "[Socket] Rate limited: skipping send\n";
+            close(clientFd);
             continue;
         }
 
@@ -96,10 +106,19 @@ void UdsServer::loop() {
         while (total < payload.size()) {
             ssize_t n = send(clientFd, data + total, payload.size() - total, 0);
             if (n < 0) {
-                std::cerr << "send() failed: " << strerror(errno) << "\n";
+                std::cerr << "[Socket] send() failed: " << strerror(errno) << "\n";
                 break;
             }
             total += static_cast<size_t>(n);
+        }
+
+        std::cout << std::endl;
+
+        if (total == payload.size()) {
+            std::cout << "[Socket] Sent JSON over UDS: " << payload << std::endl;
+            lastSendTime_ = clock::now();
+        } else {
+            std::cerr << "[Socket] Partial send over UDS: " << total << "/" << payload.size() << "\n";
         }
 
         close(clientFd);
