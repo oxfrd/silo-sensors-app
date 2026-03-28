@@ -17,7 +17,10 @@ int main(int argc, char *argv[])
     try
     {
         MonitoringService service(useMockedSensors);
+        UdsServer publisher("/run/silo-monitor.sock", service);
+
         service.initialize();
+        publisher.start();
         service.run();
     }
     catch (const std::exception &e)
