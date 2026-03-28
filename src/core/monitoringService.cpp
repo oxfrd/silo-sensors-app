@@ -45,9 +45,9 @@ void MonitoringService::run()
     {
         temperatureMonitor->recordTemperatures();
         temperatureMonitor->printAlarmStatus();
-        
+
         std::lock_guard<std::mutex> lock(dataMutex_);
-        //TODO: save data here which will be transported
+        // TODO: save data here which will be transported
 
         // Validate sensors each 5 seconds
         validationCounter++;
@@ -73,9 +73,9 @@ void MonitoringService::start()
     running = true;
 }
 
-Json::Value MonitoringService::getSnapshot() const 
+Json::Value MonitoringService::getSnapshot() const
 {
-    //example of implementation, TODO: expansion to real data
+    // example of implementation, TODO: expansion to real data
     std::lock_guard<std::mutex> lock(dataMutex_);
 
     Json::Value root;
