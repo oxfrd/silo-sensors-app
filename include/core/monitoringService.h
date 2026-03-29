@@ -4,7 +4,6 @@
 #include "assignmentsManager.h"
 #include "historyRecorder.h"
 #include "sensorManager.h"
-#include "sensorValidator.h"
 
 #include "iSnapshotProvider.h"
 #include "udsServer.h"
@@ -17,7 +16,6 @@ class MonitoringService : public ISnapshotProvider
     std::unique_ptr<SensorManager> sensorManager;
     std::unique_ptr<AlarmManager> alarmManager;
     std::unique_ptr<HistoryRecorder> historyRecorder;
-    std::unique_ptr<SensorValidator> sensorValidator;
     bool running = false;
     bool mocked_;
     int validationCounter = 0;

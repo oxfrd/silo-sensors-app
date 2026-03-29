@@ -4,14 +4,12 @@
 #include <map>
 #include <thread>
 
-MonitoringService::MonitoringService(bool useMockedSensors): mocked_(useMockedSensors)
+MonitoringService::MonitoringService(bool useMockedSensors) : mocked_(useMockedSensors)
 {
     assignmentsManager = std::make_unique<AssignmentsManager>();
     sensorManager = std::make_unique<SensorManager>(nullptr, mocked_);
     alarmManager = std::make_unique<AlarmManager>();
     historyRecorder = std::make_unique<HistoryRecorder>("measurementsHistory.csv", 40);
-
-    sensorValidator = std::make_unique<SensorValidator>(*assignmentsManager, *sensorManager, *alarmManager);
 }
 
 void MonitoringService::initialize()
@@ -27,7 +25,7 @@ void MonitoringService::initialize()
         std::cout << "Created default sensor assignments." << std::endl;
     }
 
-    sensorValidator->validateAssignedSensors();
+    // assignmentsManager->validateAssignedSensors();
 
     std::cout << "Monitoring service initialized." << std::endl;
 
@@ -37,17 +35,24 @@ void MonitoringService::initialize()
 void MonitoringService::run()
 {
     std::cout << "Starting main monitoring loop..." << std::endl;
-
     while (running)
     {
         std::lock_guard<std::mutex> lock(dataMutex_);
         // TODO: save data here which will be transported
 
-        // Validate sensors each 5 seconds
+        // Validate sensors each 5 seconds TODO: delete loop, check is inside assignments manager
         validationCounter++;
         if (validationCounter >= 5)
         {
-            sensorValidator->validateAssignedSensors();
+            // TODO: scan fun type of vector string
+            auto connectedSensors = sensorManager->scan();
+            std::vector<std::string> ids;
+            for (const auto &item : connectedSensors)
+            {
+                ids.push_back(item.id);
+            }
+
+            assignmentsManager->validateAssignedSensors(true, ids);
             validationCounter = 0;
         }
 

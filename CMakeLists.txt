@@ -60,7 +60,6 @@ set(CORE_SOURCES
 
 set(SENSORS_SOURCES
     src/sensors/sensorManager.cpp
-    src/sensors/sensorValidator.cpp
     src/sensors/mockSensorProvider.cpp
     src/sensors/realSensorProvider.cpp
 )
@@ -106,7 +105,6 @@ set(SENSORS_HEADERS
     include/sensors/sensorInterface.h
     include/sensors/sensorManager.h
     include/sensors/sensorData.h
-    include/sensors/sensorValidator.h
     include/sensors/mockSensorProvider.h
     include/sensors/realSensorProvider.h
     include/sensors/iSensorManager.h

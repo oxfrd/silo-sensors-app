@@ -5,22 +5,31 @@
 #include <limits>
 #include <map>
 #include <string>
+#include <mutex>
+#include <chrono>
+#include <vector>
 
 class AssignmentsManager : public IAssignmentsManager
 {
   private:
-    static constexpr std::uint8_t MAX_SENSORS_COUNT = std::numeric_limits<std::uint8_t>::max();
+    static constexpr auto cAbsentSensorsCleanupInterval = std::chrono::seconds(30);
 
     std::string storage_file;
-    std::uint8_t sensor_count = MAX_SENSORS_COUNT;
-    std::map<uint8_t, std::string> assignments;
+    std::map<uint8_t, std::string> assignments_;
+    std::chrono::steady_clock::time_point lastValidation_;
+    std::chrono::steady_clock::time_point lastCleanup_;
+    std::chrono::seconds validationInterval_;
+    std::mutex mutex_;
 
     void load();
+    void clearAlarmsForNotExistingSensors(const std::vector<std::string> &sensors);
+    void printSensorInfo();
 
   public:
-    AssignmentsManager(const std::string &file = "silo_assignments.json");
+    AssignmentsManager(const std::string &file = "silo_assignments.json", std::chrono::seconds validationInterval = std::chrono::seconds(10));
 
     void save();
     std::map<uint8_t, std::string> get(bool fileReload = false) override;
     void set(const std::map<uint8_t, std::string> &newAssignments) override;
+    void validateAssignedSensors(bool printInfo, const std::vector<std::string> &connectedSensors);
 };
