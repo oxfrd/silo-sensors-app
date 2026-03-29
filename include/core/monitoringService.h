@@ -5,7 +5,6 @@
 #include "historyRecorder.h"
 #include "sensorManager.h"
 #include "sensorValidator.h"
-#include "temperatureMonitor.h"
 
 #include "iSnapshotProvider.h"
 #include "udsServer.h"
@@ -19,10 +18,13 @@ class MonitoringService : public ISnapshotProvider
     std::unique_ptr<AlarmManager> alarmManager;
     std::unique_ptr<HistoryRecorder> historyRecorder;
     std::unique_ptr<SensorValidator> sensorValidator;
-    std::unique_ptr<TemperatureMonitor> temperatureMonitor;
     bool running = false;
+    bool mocked_;
     int validationCounter = 0;
     mutable std::mutex dataMutex_;
+    
+    void dataCollector();
+
   public:
     MonitoringService(bool useMockedSensors = false);
 

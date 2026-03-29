@@ -4,15 +4,14 @@
 #include <map>
 #include <thread>
 
-MonitoringService::MonitoringService(bool useMockedSensors)
+MonitoringService::MonitoringService(bool useMockedSensors): mocked_(useMockedSensors)
 {
     assignmentsManager = std::make_unique<AssignmentsManager>();
-    sensorManager = std::make_unique<SensorManager>(nullptr, useMockedSensors);
+    sensorManager = std::make_unique<SensorManager>(nullptr, mocked_);
     alarmManager = std::make_unique<AlarmManager>();
     historyRecorder = std::make_unique<HistoryRecorder>("measurementsHistory.csv", 40);
 
     sensorValidator = std::make_unique<SensorValidator>(*assignmentsManager, *sensorManager, *alarmManager);
-    temperatureMonitor = std::make_unique<TemperatureMonitor>(*sensorManager, *historyRecorder, *alarmManager);
 }
 
 void MonitoringService::initialize()
@@ -20,7 +19,7 @@ void MonitoringService::initialize()
     std::cout << "Initializing monitoring service..." << std::endl;
 
     auto assignments = assignmentsManager->get();
-    if (assignments.empty())
+    if (assignments.empty() && mocked_)
     {
         assignments = {
             {0, "28ff123456789abc"}, {1, "28ffabcdef123456"}, {2, "28ffaabbccddeeff"}, {3, "28ff001122334455"}};
@@ -41,9 +40,6 @@ void MonitoringService::run()
 
     while (running)
     {
-        temperatureMonitor->recordTemperatures();
-        temperatureMonitor->printAlarmStatus();
-
         std::lock_guard<std::mutex> lock(dataMutex_);
         // TODO: save data here which will be transported
 
@@ -75,10 +71,38 @@ Json::Value MonitoringService::getSnapshot() const
 {
     // example of implementation, TODO: expansion to real data
     std::lock_guard<std::mutex> lock(dataMutex_);
-
     Json::Value root;
     root["temperature"] = 23;
     root["humidity"] = 80;
     root["alarmActive"] = 0;
     return root;
+}
+
+void MonitoringService::dataCollector()
+{
+    //TODO: implement data collection and saving to history recorder
+    auto temps = sensorManager->getTemps();
+    
+    std::cout << temps.size() << " measurements" << std::endl;
+    for (const auto &[id, temp] : temps)
+    {
+        std::cout << "  Sensor " << id << ": " << temp << "°C" << std::endl;
+        historyRecorder->log(id, temp, 0);
+    }
+
+    auto activeAlarms = alarmManager->getAllAlarmStates();
+
+    if (!activeAlarms.empty())
+    {
+        std::cout << "Active alarms: " << activeAlarms.size() << std::endl;
+        for (const auto &alarm : activeAlarms)
+        {
+            std::cout << "  Sensor '" << alarm.first << "' alarm code: " << static_cast<int>(alarm.second.code)
+                      << std::endl;
+        }
+    }
+    else
+    {
+        std::cout << "No active alarms." << std::endl;
+    }
 }

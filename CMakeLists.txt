@@ -56,7 +56,6 @@ find_package(Threads REQUIRED)
 # ============================================================================
 set(CORE_SOURCES
     src/core/monitoringService.cpp
-    src/core/temperatureMonitor.cpp
 )
 
 set(SENSORS_SOURCES
@@ -101,7 +100,6 @@ set(ALL_SOURCES
 # ============================================================================
 set(CORE_HEADERS
     include/core/monitoringService.h
-    include/core/temperatureMonitor.h
 )
 
 set(SENSORS_HEADERS
