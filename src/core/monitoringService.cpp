@@ -1,4 +1,6 @@
 #include "monitoringService.h"
+#include "alarmManager.h"
+
 #include <chrono>
 #include <iostream>
 #include <map>
@@ -6,9 +8,9 @@
 
 MonitoringService::MonitoringService(bool useMockedSensors) : mocked_(useMockedSensors)
 {
-    assignmentsManager = std::make_unique<AssignmentsManager>();
-    sensorManager = std::make_unique<SensorManager>(nullptr, mocked_);
     alarmManager = std::make_unique<AlarmManager>();
+    assignmentsManager = std::make_unique<AssignmentsManager>(*alarmManager);
+    sensorManager = std::make_unique<SensorManager>(nullptr, mocked_);
     historyRecorder = std::make_unique<HistoryRecorder>("measurementsHistory.csv", 40);
 }
 
@@ -78,9 +80,9 @@ Json::Value MonitoringService::getSnapshot() const
 
 void MonitoringService::dataCollector()
 {
-    //TODO: implement data collection and saving to history recorder
+    // TODO: implement data collection and saving to history recorder
     auto temps = sensorManager->getTemps();
-    
+
     std::cout << temps.size() << " measurements" << std::endl;
     for (const auto &[id, temp] : temps)
     {

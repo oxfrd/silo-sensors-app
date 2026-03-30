@@ -1,12 +1,14 @@
 #pragma once
 
+#include "iAlarmManager.h"
 #include "iAssignmentsManager.h"
+
+#include <chrono>
 #include <cstdint>
 #include <limits>
 #include <map>
-#include <string>
 #include <mutex>
-#include <chrono>
+#include <string>
 #include <vector>
 
 class AssignmentsManager : public IAssignmentsManager
@@ -14,6 +16,7 @@ class AssignmentsManager : public IAssignmentsManager
   private:
     static constexpr auto cAbsentSensorsCleanupInterval = std::chrono::seconds(30);
 
+    IAlarmManager &alarmManager_;
     std::string storage_file;
     std::map<uint8_t, std::string> assignments_;
     std::chrono::steady_clock::time_point lastValidation_;
@@ -26,7 +29,8 @@ class AssignmentsManager : public IAssignmentsManager
     void printSensorInfo();
 
   public:
-    AssignmentsManager(const std::string &file = "silo_assignments.json", std::chrono::seconds validationInterval = std::chrono::seconds(10));
+    AssignmentsManager(IAlarmManager &alarmManager, const std::string &file = "silo_assignments.json",
+                       std::chrono::seconds validationInterval = std::chrono::seconds(10));
 
     void save();
     std::map<uint8_t, std::string> get(bool fileReload = false) override;
