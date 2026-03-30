@@ -6,6 +6,13 @@
 
 namespace fs = std::filesystem;
 
+AssignmentsManager::AssignmentsManager(IAlarmManager &alarmManager, const std::string &file,
+                                       std::chrono::seconds validationInterval)
+    : alarmManager_(alarmManager), storage_file(file), validationInterval_(validationInterval)
+{
+    load();
+}
+
 // Sensors assignments manager
 void AssignmentsManager::load()
 {
@@ -45,12 +52,6 @@ void AssignmentsManager::load()
             std::cerr << "ERROR: Loading assignments failed: " << e.what() << std::endl;
         }
     }
-}
-
-AssignmentsManager::AssignmentsManager(const std::string &file, std::chrono::seconds validationInterval)
-    : storage_file(file), validationInterval_(validationInterval)
-{
-    load();
 }
 
 void AssignmentsManager::save()
@@ -125,11 +126,11 @@ void AssignmentsManager::validateAssignedSensors(bool printInfo, const std::vect
         if (!found)
         {
             std::cerr << "Warning: Sensor '" << sensorId << "' is assigned but unconnected." << std::endl;
-            alarmManager.addAlarmState(sensorId, AlarmCode::SENSOR_DISCONNECTED, 0.0f);
+            alarmManager_.addAlarmState(sensorId, AlarmCode::SENSOR_DISCONNECTED, 0.0f);
         }
         else
         {
-            alarmManager.clearAlarm(sensorId);
+            alarmManager_.clearAlarm(sensorId);
         }
     }
 
@@ -151,7 +152,7 @@ void AssignmentsManager::clearAlarmsForNotExistingSensors(const std::vector<std:
 
     lastCleanup_ = now;
 
-    auto activeAlarms = alarmManager.getActiveAlarms();
+    auto activeAlarms = alarmManager_.getActiveAlarms();
 
     for (const auto &alarm : activeAlarms)
     {
@@ -183,7 +184,7 @@ void AssignmentsManager::clearAlarmsForNotExistingSensors(const std::vector<std:
         {
             std::cerr << "Warning: Sensor '" << alarm.sensorId
                       << "' has alarm but not in assignments and not available. Clearing." << std::endl;
-            alarmManager.clearAlarm(alarm.sensorId);
+            alarmManager_.clearAlarm(alarm.sensorId);
         }
     }
 }

@@ -1,10 +1,10 @@
 #pragma once
 
-#include "alarmManager.h"
 #include "assignmentsManager.h"
 #include "historyRecorder.h"
 #include "sensorManager.h"
 
+#include "iAlarmManager.h"
 #include "iSnapshotProvider.h"
 #include "udsServer.h"
 #include <memory>
@@ -12,9 +12,9 @@
 class MonitoringService : public ISnapshotProvider
 {
   private:
+    std::unique_ptr<IAlarmManager> alarmManager;
     std::unique_ptr<AssignmentsManager> assignmentsManager;
     std::unique_ptr<SensorManager> sensorManager;
-    std::unique_ptr<AlarmManager> alarmManager;
     std::unique_ptr<HistoryRecorder> historyRecorder;
     bool running = false;
     bool mocked_;
