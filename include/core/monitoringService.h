@@ -18,7 +18,6 @@ class MonitoringService : public ISnapshotProvider
     std::unique_ptr<HistoryRecorder> historyRecorder;
     bool running = false;
     bool mocked_;
-    int validationCounter = 0;
     mutable std::mutex dataMutex_;
     
     void dataCollector();
