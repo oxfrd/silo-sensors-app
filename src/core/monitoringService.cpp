@@ -40,21 +40,14 @@ void MonitoringService::run()
         std::lock_guard<std::mutex> lock(dataMutex_);
         // TODO: save data here which will be transported
 
-        // Validate sensors each 5 seconds TODO: delete loop, check is inside assignments manager
-        validationCounter++;
-        if (validationCounter >= 5)
+        auto connectedSensors = sensorManager->scan();
+        std::vector<std::string> ids;
+        for (const auto &item : connectedSensors)
         {
-            // TODO: scan fun type of vector string
-            auto connectedSensors = sensorManager->scan();
-            std::vector<std::string> ids;
-            for (const auto &item : connectedSensors)
-            {
-                ids.push_back(item.id);
-            }
-
-            assignmentsManager->validateAssignedSensors(true, ids);
-            validationCounter = 0;
+            ids.push_back(item.id);
         }
+
+        assignmentsManager->validateAssignedSensors(true, ids);
 
         std::this_thread::sleep_for(std::chrono::seconds(1));
     }
