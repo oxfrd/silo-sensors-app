@@ -5,15 +5,6 @@
 
 namespace fs = std::filesystem;
 
-// wymagane zaleznosci do kompilacji
-// g++ -std=c++17 sensors.cpp -o sensors -ljsoncpp -lstdc++fs
-
-// w yocto recipe zaleznosci:
-/*
-    DEPENDS = "jsoncpp"
-    EXTRA_OEMAKE = "CXXFLAGS='-std=c++17'"
-*/
-
 SensorManager::SensorManager(std::unique_ptr<SensorInterface> customProvider, bool mock)
 {
     if (mock)
@@ -30,15 +21,9 @@ SensorManager::SensorManager(std::unique_ptr<SensorInterface> customProvider, bo
     }
 }
 
-std::vector<SensorData> SensorManager::scan()
+std::vector<std::string> SensorManager::scan()
 {
-    std::vector<SensorData> result;
-    auto ids = provider->scan();
-    for (const auto &id : ids)
-    {
-        result.emplace_back(id);
-    }
-    return result;
+    return provider->scan();
 }
 
 std::map<std::string, float> SensorManager::getTemps()

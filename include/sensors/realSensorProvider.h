@@ -14,6 +14,6 @@ class RealSensorProvider : public SensorInterface
   public:
     RealSensorProvider(const std::string &path = "/sys/bus/w1/devices");
 
-    std::vector<std::string> scan();
-    std::map<std::string, float> getTemps();
+    std::vector<std::string> scan() override;
+    std::map<std::string, float> getTemps() override;
 };
