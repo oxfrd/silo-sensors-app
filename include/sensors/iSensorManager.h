@@ -1,6 +1,5 @@
 #pragma once
 
-#include "sensorData.h"
 #include <map>
 #include <string>
 #include <vector>
@@ -12,7 +11,7 @@ class ISensorManager
     virtual ~ISensorManager() = default;
 
     // Scan for connected sensors
-    virtual std::vector<SensorData> scan() = 0;
+    virtual std::vector<std::string> scan() = 0;
 
     // Get current temperatures for all sensors
     virtual std::map<std::string, float> getTemps() = 0;

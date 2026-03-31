@@ -2,9 +2,7 @@
 #include <chrono>
 #include <iostream>
 
-MockSensorProvider::MockSensorProvider() : global_time(std::chrono::system_clock::now().time_since_epoch().count())
-{
-}
+MockSensorProvider::MockSensorProvider() : global_time(std::chrono::system_clock::now().time_since_epoch().count()) {}
 
 std::vector<std::string> MockSensorProvider::scan()
 {

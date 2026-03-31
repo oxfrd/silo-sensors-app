@@ -9,7 +9,8 @@
 MonitoringService::MonitoringService(bool useMockedSensors) : mocked_(useMockedSensors)
 {
     alarmManager = std::make_unique<AlarmManager>();
-    assignmentsManager = std::make_unique<AssignmentsManager>(*alarmManager);
+    assignmentsManager =
+        std::make_unique<AssignmentsManager>(*alarmManager, "silo_assignments.json", std::chrono::seconds(5));
     sensorManager = std::make_unique<SensorManager>(nullptr, mocked_);
     historyRecorder = std::make_unique<HistoryRecorder>("measurementsHistory.csv", 40);
 }
@@ -27,7 +28,8 @@ void MonitoringService::initialize()
         std::cout << "Created default sensor assignments." << std::endl;
     }
 
-    // assignmentsManager->validateAssignedSensors();
+    auto connectedSensors = sensorManager->scan();
+    assignmentsManager->validateAssignedSensors(true, connectedSensors);
 
     std::cout << "Monitoring service initialized." << std::endl;
 
@@ -43,13 +45,7 @@ void MonitoringService::run()
         // TODO: save data here which will be transported
 
         auto connectedSensors = sensorManager->scan();
-        std::vector<std::string> ids;
-        for (const auto &item : connectedSensors)
-        {
-            ids.push_back(item.id);
-        }
-
-        assignmentsManager->validateAssignedSensors(true, ids);
+        assignmentsManager->validateAssignedSensors(true, connectedSensors);
 
         std::this_thread::sleep_for(std::chrono::seconds(1));
     }
