@@ -44,17 +44,17 @@ void MonitoringService::run()
     std::cout << "Starting main monitoring loop..." << std::endl;
     while (running)
     {
-        std::lock_guard<std::mutex> lock(dataMutex_);
-        // TODO: save data here which will be transported
-    
-        if (timeElapsed(lastValidationTime, 5s))
+        
+        dataCollector();
+        
+        if (timeElapsed(lastValidationTime, 10s))
         {
             std::cout << "Rescanning sensors and validating assignments..." << std::endl;
             auto connectedSensors = sensorManager->scan();
             assignmentsManager->validateAssignedSensors(true, connectedSensors);
         }
 
-        std::this_thread::sleep_for(std::chrono::seconds(1));
+        std::this_thread::sleep_for(std::chrono::seconds(2));
     }
 }
 
@@ -94,29 +94,15 @@ bool MonitoringService::timeElapsed(std::chrono::steady_clock::time_point& last,
 
 void MonitoringService::dataCollector()
 {
-    // TODO: implement data collection and saving to history recorder
+    // std::lock_guard<std::mutex> lock(dataMutex_);
+
     auto temps = sensorManager->getTemps();
 
     std::cout << temps.size() << " measurements" << std::endl;
     for (const auto &[id, temp] : temps)
     {
-        std::cout << "  Sensor " << id << ": " << temp << "°C" << std::endl;
-        historyRecorder->log(id, temp, 0);
-    }
-
-    auto activeAlarms = alarmManager->getAllAlarmStates();
-
-    if (!activeAlarms.empty())
-    {
-        std::cout << "Active alarms: " << activeAlarms.size() << std::endl;
-        for (const auto &alarm : activeAlarms)
-        {
-            std::cout << "  Sensor '" << alarm.first << "' alarm code: " << static_cast<int>(alarm.second.code)
-                      << std::endl;
-        }
-    }
-    else
-    {
-        std::cout << "No active alarms." << std::endl;
+        auto activeAlarms = alarmManager->getAlarmState(id);    
+        std::cout << "  Sensor " << id << ": " << temp << "°C, Alarm: " << static_cast<int>(activeAlarms.code) << std::endl;
+        historyRecorder->log(id, temp, static_cast<uint16_t>(activeAlarms.code));
     }
 }
