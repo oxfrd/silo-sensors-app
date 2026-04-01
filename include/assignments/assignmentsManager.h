@@ -19,9 +19,7 @@ class AssignmentsManager : public IAssignmentsManager
     IAlarmManager &alarmManager_;
     std::string storage_file;
     std::map<uint8_t, std::string> assignments_;
-    std::chrono::steady_clock::time_point lastValidation_;
     std::chrono::steady_clock::time_point lastCleanup_;
-    std::chrono::seconds validationInterval_;
     std::mutex mutex_;
 
     void load();
@@ -29,8 +27,7 @@ class AssignmentsManager : public IAssignmentsManager
     void printSensorInfo();
 
   public:
-    AssignmentsManager(IAlarmManager &alarmManager, const std::string &file = "silo_assignments.json",
-                       std::chrono::seconds validationInterval = std::chrono::seconds(10));
+    AssignmentsManager(IAlarmManager &alarmManager, const std::string &file = "silo_assignments.json");
 
     void save();
     std::map<uint8_t, std::string> get(bool fileReload = false) override;
