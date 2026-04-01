@@ -78,12 +78,23 @@ void MonitoringService::start()
 
 Json::Value MonitoringService::getSnapshot() const
 {
-    // example of implementation, TODO: expansion to real data
-    std::lock_guard<std::mutex> lock(dataMutex_);
-    Json::Value root;
-    root["temperature"] = 23;
-    root["humidity"] = 80;
-    root["alarmActive"] = 0;
+    Json::Value root(Json::arrayValue);
+
+    std::vector<SensorData> dataCopy;
+    {
+        std::lock_guard<std::mutex> lock(dataMutex_);
+        dataCopy = currentData_;
+    }
+
+    for (const auto &sensorData : dataCopy)
+    {
+        Json::Value item;
+        item["sensorId"] = sensorData.id;
+        item["temperature"] = sensorData.temp ? Json::Value(*sensorData.temp) : Json::Value(Json::nullValue);
+        item["alarmCode"] = sensorData.alarmCode ? Json::Value(*sensorData.alarmCode) : Json::Value(Json::nullValue);
+        root.append(item);
+    }
+
     return root;
 }
 
