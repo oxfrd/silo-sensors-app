@@ -10,7 +10,7 @@ MonitoringService::MonitoringService(bool useMockedSensors) : mocked_(useMockedS
 {
     alarmManager = std::make_unique<AlarmManager>();
     assignmentsManager =
-        std::make_unique<AssignmentsManager>(*alarmManager, "silo_assignments.json", std::chrono::seconds(5));
+        std::make_unique<AssignmentsManager>(*alarmManager);
     sensorManager = std::make_unique<SensorManager>(nullptr, mocked_);
     historyRecorder = std::make_unique<HistoryRecorder>("measurementsHistory.csv", 40);
 }
@@ -38,14 +38,21 @@ void MonitoringService::initialize()
 
 void MonitoringService::run()
 {
+    using namespace std::chrono_literals;
+    auto lastValidationTime = std::chrono::steady_clock::now();
+
     std::cout << "Starting main monitoring loop..." << std::endl;
     while (running)
     {
         std::lock_guard<std::mutex> lock(dataMutex_);
         // TODO: save data here which will be transported
-
-        auto connectedSensors = sensorManager->scan();
-        assignmentsManager->validateAssignedSensors(true, connectedSensors);
+    
+        if (timeElapsed(lastValidationTime, 5s))
+        {
+            std::cout << "Rescanning sensors and validating assignments..." << std::endl;
+            auto connectedSensors = sensorManager->scan();
+            assignmentsManager->validateAssignedSensors(true, connectedSensors);
+        }
 
         std::this_thread::sleep_for(std::chrono::seconds(1));
     }
@@ -72,6 +79,17 @@ Json::Value MonitoringService::getSnapshot() const
     root["humidity"] = 80;
     root["alarmActive"] = 0;
     return root;
+}
+
+bool MonitoringService::timeElapsed(std::chrono::steady_clock::time_point& last, std::chrono::milliseconds interval)
+{
+    auto now = std::chrono::steady_clock::now();
+    if (now - last >= interval)
+    {
+        last = now;
+        return true;
+    }
+    return false;
 }
 
 void MonitoringService::dataCollector()
