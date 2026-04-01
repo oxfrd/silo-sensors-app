@@ -6,9 +6,8 @@
 
 namespace fs = std::filesystem;
 
-AssignmentsManager::AssignmentsManager(IAlarmManager &alarmManager, const std::string &file,
-                                       std::chrono::seconds validationInterval)
-    : alarmManager_(alarmManager), storage_file(file), validationInterval_(validationInterval)
+AssignmentsManager::AssignmentsManager(IAlarmManager &alarmManager, const std::string &file)
+    : alarmManager_(alarmManager), storage_file(file)
 {
     load();
 }
@@ -98,13 +97,6 @@ void AssignmentsManager::set(const std::map<uint8_t, std::string> &newAssignment
 
 void AssignmentsManager::validateAssignedSensors(bool printInfo, const std::vector<std::string> &connectedSensors)
 {
-    auto now = std::chrono::steady_clock::now();
-    if (now - lastValidation_ < validationInterval_)
-    {
-        return;
-    }
-    lastValidation_ = now;
-
     load();
 
     mutex_.lock();
