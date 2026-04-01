@@ -18,6 +18,8 @@ class IAlarmManager
     // Get all active alarms (where code != NO_ALARM)
     virtual std::vector<SensorAlarmState> getActiveAlarms() const = 0;
 
+    virtual SensorAlarmState getAlarmState(const std::string &sensorId) const = 0;
+
     virtual void clearAlarm(const std::string &sensorId) = 0;
     
     virtual std::map<std::string, SensorAlarmState> getAllAlarmStates() const = 0;
