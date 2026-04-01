@@ -7,6 +7,7 @@
 #include "iAlarmManager.h"
 #include "iSnapshotProvider.h"
 #include "udsServer.h"
+#include <chrono>
 #include <memory>
 
 class MonitoringService : public ISnapshotProvider
@@ -19,8 +20,10 @@ class MonitoringService : public ISnapshotProvider
     bool running = false;
     bool mocked_;
     mutable std::mutex dataMutex_;
-    
+
     void dataCollector();
+
+    bool timeElapsed(std::chrono::steady_clock::time_point &last, std::chrono::milliseconds interval);
 
   public:
     MonitoringService(bool useMockedSensors = false);
