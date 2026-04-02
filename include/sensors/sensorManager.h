@@ -19,7 +19,8 @@ class SensorManager : public ISensorManager
     SensorManager(std::unique_ptr<SensorInterface> customProvider = nullptr, bool mock = false);
 
     std::vector<std::string> scan() override;
-    std::map<std::string, float> getTemps() override;
+    std::map<std::string, float> getRawTemps() override;
+    std::map<std::string, float> getFilteredTemps() override;
 
     void setProvider(std::unique_ptr<SensorInterface> newProvider);
     void setFilter(std::unique_ptr<ISensorFilter> filter);

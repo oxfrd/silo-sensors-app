@@ -26,7 +26,12 @@ std::vector<std::string> SensorManager::scan()
     return provider->scan();
 }
 
-std::map<std::string, float> SensorManager::getTemps()
+std::map<std::string, float> SensorManager::getRawTemps()
+{
+    return provider->getTemps();
+}
+
+std::map<std::string, float> SensorManager::getFilteredTemps()
 {
     auto raw = provider->getTemps();
     if (filter)
