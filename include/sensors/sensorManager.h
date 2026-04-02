@@ -22,6 +22,5 @@ class SensorManager : public ISensorManager
     std::map<std::string, float> getRawTemps() override;
     std::map<std::string, float> getFilteredTemps() override;
 
-    void setProvider(std::unique_ptr<SensorInterface> newProvider);
     void setFilter(std::unique_ptr<ISensorFilter> filter);
 };
