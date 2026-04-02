@@ -21,6 +21,8 @@ class MonitoringService : public ISnapshotProvider
     bool mocked_;
     mutable std::mutex dataMutex_;
 
+    std::vector<SensorData> currentData_;
+
     void dataCollector();
 
     bool timeElapsed(std::chrono::steady_clock::time_point &last, std::chrono::milliseconds interval);

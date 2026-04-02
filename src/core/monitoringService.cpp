@@ -9,8 +9,7 @@
 MonitoringService::MonitoringService(bool useMockedSensors) : mocked_(useMockedSensors)
 {
     alarmManager = std::make_unique<AlarmManager>();
-    assignmentsManager =
-        std::make_unique<AssignmentsManager>(*alarmManager);
+    assignmentsManager = std::make_unique<AssignmentsManager>(*alarmManager);
     sensorManager = std::make_unique<SensorManager>(nullptr, mocked_);
     historyRecorder = std::make_unique<HistoryRecorder>("measurementsHistory.csv", 40);
 }
@@ -31,6 +30,13 @@ void MonitoringService::initialize()
     auto connectedSensors = sensorManager->scan();
     assignmentsManager->validateAssignedSensors(true, connectedSensors);
 
+    for (const auto &sensorId : assignments)
+    {
+        std::cout << "Assigned sensor: " << sensorId.second << std::endl;
+        std::lock_guard<std::mutex> lock(dataMutex_);
+        currentData_.push_back(SensorData(sensorId.second));
+    }
+
     std::cout << "Monitoring service initialized." << std::endl;
 
     start();
@@ -38,22 +44,23 @@ void MonitoringService::initialize()
 
 void MonitoringService::run()
 {
+    using namespace std::chrono_literals;
     auto lastValidationTime = std::chrono::steady_clock::now();
 
     std::cout << "Starting main monitoring loop..." << std::endl;
     while (running)
     {
-        std::lock_guard<std::mutex> lock(dataMutex_);
-        // TODO: save data here which will be transported
-    
-        if (timeElapsed(lastValidationTime, 5000))
+
+        dataCollector();
+
+        if (timeElapsed(lastValidationTime, 10s))
         {
             std::cout << "Rescanning sensors and validating assignments..." << std::endl;
             auto connectedSensors = sensorManager->scan();
             assignmentsManager->validateAssignedSensors(true, connectedSensors);
         }
 
-        std::this_thread::sleep_for(std::chrono::seconds(1));
+        std::this_thread::sleep_for(std::chrono::seconds(2));
     }
 }
 
@@ -71,16 +78,27 @@ void MonitoringService::start()
 
 Json::Value MonitoringService::getSnapshot() const
 {
-    // example of implementation, TODO: expansion to real data
-    std::lock_guard<std::mutex> lock(dataMutex_);
-    Json::Value root;
-    root["temperature"] = 23;
-    root["humidity"] = 80;
-    root["alarmActive"] = 0;
+    Json::Value root(Json::arrayValue);
+
+    std::vector<SensorData> dataCopy;
+    {
+        std::lock_guard<std::mutex> lock(dataMutex_);
+        dataCopy = currentData_;
+    }
+
+    for (const auto &sensorData : dataCopy)
+    {
+        Json::Value item;
+        item["sensorId"] = sensorData.id;
+        item["temperature"] = sensorData.temp ? Json::Value(*sensorData.temp) : Json::Value(Json::nullValue);
+        item["alarmCode"] = sensorData.alarmCode ? Json::Value(*sensorData.alarmCode) : Json::Value(Json::nullValue);
+        root.append(item);
+    }
+
     return root;
 }
 
-bool MonitoringService::timeElapsed(std::chrono::steady_clock::time_point& last, std::chrono::milliseconds interval)
+bool MonitoringService::timeElapsed(std::chrono::steady_clock::time_point &last, std::chrono::milliseconds interval)
 {
     auto now = std::chrono::steady_clock::now();
     if (now - last >= interval)
@@ -93,29 +111,29 @@ bool MonitoringService::timeElapsed(std::chrono::steady_clock::time_point& last,
 
 void MonitoringService::dataCollector()
 {
-    // TODO: implement data collection and saving to history recorder
+    std::vector<SensorData> dataCopy;
+    {
+        std::lock_guard<std::mutex> lock(dataMutex_);
+        dataCopy = currentData_;
+    }
+
     auto temps = sensorManager->getTemps();
 
-    std::cout << temps.size() << " measurements" << std::endl;
-    for (const auto &[id, temp] : temps)
+    for (auto &sensorData : dataCopy)
     {
-        std::cout << "  Sensor " << id << ": " << temp << "°C" << std::endl;
-        historyRecorder->log(id, temp, 0);
+        auto activeAlarms = alarmManager->getAlarmState(sensorData.id);
+        sensorData.temp = temps.at(sensorData.id);
+        sensorData.alarmCode = static_cast<std::uint16_t>(activeAlarms.code);
+
+        std::cout << "  Sensor " << sensorData.id << ": " << sensorData.temp.value_or(0.0f)
+                  << "°C, Alarm: " << static_cast<std::uint16_t>(activeAlarms.code) << std::endl;
+
+        historyRecorder->log(sensorData.id, sensorData.temp.value_or(0.0f),
+                             static_cast<std::uint16_t>(activeAlarms.code));
     }
 
-    auto activeAlarms = alarmManager->getAllAlarmStates();
-
-    if (!activeAlarms.empty())
     {
-        std::cout << "Active alarms: " << activeAlarms.size() << std::endl;
-        for (const auto &alarm : activeAlarms)
-        {
-            std::cout << "  Sensor '" << alarm.first << "' alarm code: " << static_cast<int>(alarm.second.code)
-                      << std::endl;
-        }
-    }
-    else
-    {
-        std::cout << "No active alarms." << std::endl;
+        std::lock_guard<std::mutex> lock(dataMutex_);
+        currentData_ = std::move(dataCopy);
     }
 }

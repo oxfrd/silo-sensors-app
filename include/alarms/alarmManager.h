@@ -17,7 +17,7 @@ class AlarmManager : public IAlarmManager
     void addAlarmState(const std::string &sensorId, AlarmCode code, float value) override;
 
     // Get current alarm state for a specific sensor
-    SensorAlarmState getAlarmState(const std::string &sensorId) const;
+    SensorAlarmState getAlarmState(const std::string &sensorId) const override;
 
     // Get all active alarms (where code != NO_ALARM)
     std::vector<SensorAlarmState> getActiveAlarms() const override;
