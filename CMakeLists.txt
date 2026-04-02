@@ -62,6 +62,7 @@ set(SENSORS_SOURCES
     src/sensors/sensorManager.cpp
     src/sensors/mockSensorProvider.cpp
     src/sensors/realSensorProvider.cpp
+    src/sensors/deltaSensorFilter.cpp
 )
 
 set(ALARMS_SOURCES
@@ -108,6 +109,8 @@ set(SENSORS_HEADERS
     include/sensors/mockSensorProvider.h
     include/sensors/realSensorProvider.h
     include/sensors/iSensorManager.h
+    include/sensors/iSensorFilter.h
+    include/sensors/deltaSensorFilter.h
 )
 
 set(ALARMS_HEADERS
