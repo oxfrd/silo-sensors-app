@@ -41,11 +41,6 @@ std::map<std::string, float> SensorManager::getFilteredTemps()
     return raw;
 }
 
-void SensorManager::setProvider(std::unique_ptr<SensorInterface> newProvider)
-{
-    provider = std::move(newProvider);
-}
-
 void SensorManager::setFilter(std::unique_ptr<ISensorFilter> newFilter)
 {
     filter = std::move(newFilter);
