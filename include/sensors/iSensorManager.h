@@ -14,5 +14,6 @@ class ISensorManager
     virtual std::vector<std::string> scan() = 0;
 
     // Get current temperatures for all sensors
-    virtual std::map<std::string, float> getTemps() = 0;
+    virtual std::map<std::string, float> getRawTemps() = 0;
+    virtual std::map<std::string, float> getFilteredTemps() = 0;
 };
