@@ -1,6 +1,6 @@
 #include "monitoringService.h"
 #include "alarmManager.h"
-#include "sensors/deltaSensorFilter.h"
+#include "sensors/movingAverageOutlierRejectingSensorFilter.h"
 
 #include <chrono>
 #include <iostream>
@@ -13,8 +13,11 @@ MonitoringService::MonitoringService(bool useMockedSensors) : mocked_(useMockedS
     assignmentsManager = std::make_unique<AssignmentsManager>(*alarmManager);
     sensorManager = std::make_unique<SensorManager>(nullptr, mocked_);
 
-    // Apply temperature filtering to reduce noise/insignificant fluctuations.
-    sensorManager->setFilter(std::make_unique<DeltaSensorFilter>(0.1f, std::chrono::seconds(30)));
+    // Apply moving average + outlier rejection filter to stabilize readings and drop spikes.
+    // min/max temperature range is validated before outlier/moving average logic.
+    float minTempThld = -30.0f;
+    float maxTempThld = 50.0f;
+    sensorManager->setFilter(std::make_unique<MAOutlierFilter>(5, 3.0f, 3, minTempThld, maxTempThld));
 
     historyRecorder = std::make_unique<HistoryRecorder>("measurementsHistory.csv", 40);
 }
@@ -122,7 +125,7 @@ void MonitoringService::dataCollector()
         dataCopy = currentData_;
     }
 
-    auto temps = sensorManager->getTemps();
+    auto temps = sensorManager->getFilteredTemps();
 
     for (auto &sensorData : dataCopy)
     {
