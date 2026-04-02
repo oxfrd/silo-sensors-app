@@ -1,5 +1,6 @@
 #include "monitoringService.h"
 #include "alarmManager.h"
+#include "sensors/deltaSensorFilter.h"
 
 #include <chrono>
 #include <iostream>
@@ -11,6 +12,10 @@ MonitoringService::MonitoringService(bool useMockedSensors) : mocked_(useMockedS
     alarmManager = std::make_unique<AlarmManager>();
     assignmentsManager = std::make_unique<AssignmentsManager>(*alarmManager);
     sensorManager = std::make_unique<SensorManager>(nullptr, mocked_);
+
+    // Apply temperature filtering to reduce noise/insignificant fluctuations.
+    sensorManager->setFilter(std::make_unique<DeltaSensorFilter>(0.1f, std::chrono::seconds(30)));
+
     historyRecorder = std::make_unique<HistoryRecorder>("measurementsHistory.csv", 40);
 }
 

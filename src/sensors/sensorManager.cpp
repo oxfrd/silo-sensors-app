@@ -28,10 +28,20 @@ std::vector<std::string> SensorManager::scan()
 
 std::map<std::string, float> SensorManager::getTemps()
 {
-    return provider->getTemps();
+    auto raw = provider->getTemps();
+    if (filter)
+    {
+        return filter->filter(raw);
+    }
+    return raw;
 }
 
 void SensorManager::setProvider(std::unique_ptr<SensorInterface> newProvider)
 {
     provider = std::move(newProvider);
+}
+
+void SensorManager::setFilter(std::unique_ptr<ISensorFilter> newFilter)
+{
+    filter = std::move(newFilter);
 }
