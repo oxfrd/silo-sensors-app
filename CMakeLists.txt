@@ -63,6 +63,7 @@ set(SENSORS_SOURCES
     src/sensors/mockSensorProvider.cpp
     src/sensors/realSensorProvider.cpp
     src/sensors/deltaSensorFilter.cpp
+    src/sensors/movingAverageOutlierRejectingSensorFilter.cpp
 )
 
 set(ALARMS_SOURCES
@@ -111,6 +112,7 @@ set(SENSORS_HEADERS
     include/sensors/iSensorManager.h
     include/sensors/iSensorFilter.h
     include/sensors/deltaSensorFilter.h
+    include/sensors/movingAverageOutlierRejectingSensorFilter.h
 )
 
 set(ALARMS_HEADERS
