@@ -72,9 +72,7 @@ std::optional<float> RealSensorProvider::readTemp(const std::string &sensorId)
     return std::nullopt;
 }
 
-RealSensorProvider::RealSensorProvider(const std::string &path) : sensorPath(path)
-{
-}
+RealSensorProvider::RealSensorProvider(const std::string &path) : sensorPath(path) {}
 
 std::vector<std::string> RealSensorProvider::scan()
 {

@@ -1,28 +1,32 @@
 #pragma once
 
-#include "alarmManager.h"
 #include "assignmentsManager.h"
 #include "historyRecorder.h"
 #include "sensorManager.h"
-#include "sensorValidator.h"
-#include "temperatureMonitor.h"
 
+#include "iAlarmManager.h"
 #include "iSnapshotProvider.h"
 #include "udsServer.h"
+#include <chrono>
 #include <memory>
 
 class MonitoringService : public ISnapshotProvider
 {
   private:
+    std::unique_ptr<IAlarmManager> alarmManager;
     std::unique_ptr<AssignmentsManager> assignmentsManager;
     std::unique_ptr<SensorManager> sensorManager;
-    std::unique_ptr<AlarmManager> alarmManager;
     std::unique_ptr<HistoryRecorder> historyRecorder;
-    std::unique_ptr<SensorValidator> sensorValidator;
-    std::unique_ptr<TemperatureMonitor> temperatureMonitor;
     bool running = false;
-    int validationCounter = 0;
+    bool mocked_;
     mutable std::mutex dataMutex_;
+
+    std::vector<SensorData> currentData_;
+
+    void dataCollector();
+
+    bool timeElapsed(std::chrono::steady_clock::time_point &last, std::chrono::milliseconds interval);
+
   public:
     MonitoringService(bool useMockedSensors = false);
 
