@@ -20,7 +20,6 @@ class MAOutlierFilter : public ISensorFilter
     {
         std::deque<float> window;
         float sum = 0.0f;
-        float sumSquares = 0.0f;
         float lastAccepted = 0.0f;
     };
 
