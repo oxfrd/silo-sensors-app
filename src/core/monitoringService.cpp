@@ -38,11 +38,25 @@ void MonitoringService::initialize()
     auto connectedSensors = sensorManager->scan();
     assignmentsManager->validateAssignedSensors(true, connectedSensors);
 
-    for (const auto &sensorId : assignments)
+    std::lock_guard<std::mutex> lock(dataMutex_);
+    currentData_.clear();
+
+    if (!assignments.empty())
     {
-        std::cout << "Assigned sensor: " << sensorId.second << std::endl;
-        std::lock_guard<std::mutex> lock(dataMutex_);
-        currentData_.push_back(SensorData(sensorId.second));
+        for (const auto &sensorId : assignments)
+        {
+            std::cout << "Assigned sensor: " << sensorId.second << std::endl;
+            currentData_.push_back(SensorData(sensorId.second));
+        }
+    }
+    else if (!connectedSensors.empty())
+    {
+        std::cout << "No assignments found, publishing connected sensors instead." << std::endl;
+        for (const auto &sensorId : connectedSensors)
+        {
+            std::cout << "Detected sensor: " << sensorId << std::endl;
+            currentData_.push_back(SensorData(sensorId));
+        }
     }
 
     std::cout << "Monitoring service initialized." << std::endl;
