@@ -17,7 +17,7 @@ MonitoringService::MonitoringService(bool useMockedSensors) : mocked_(useMockedS
     // min/max temperature range is validated before outlier/moving average logic.
     float minTempThld = -30.0f;
     float maxTempThld = 50.0f;
-    sensorManager->setFilter(std::make_unique<MAOutlierFilter>(5, 3.0f, 3, minTempThld, maxTempThld));
+    sensorManager->setFilter(std::make_unique<MAOutlierFilter>(3, 2.0f, 3, minTempThld, maxTempThld));
 
     historyRecorder = std::make_unique<HistoryRecorder>("measurementsHistory.csv", 40);
 }
