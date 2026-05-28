@@ -1,10 +1,10 @@
 #pragma once
 
-#include <json/json.h>
+#include <string>
 
 class ISnapshotProvider
 {
   public:
     virtual ~ISnapshotProvider() = default;
-    virtual Json::Value getSnapshot() const = 0;
+    virtual std::string getSnapshot() const = 0;
 };

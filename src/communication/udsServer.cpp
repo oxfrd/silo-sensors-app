@@ -1,13 +1,14 @@
 #include "udsServer.h"
 #include "iSnapshotProvider.h"
 
+#include <arpa/inet.h>
 #include <cerrno>
 #include <cstring>
 #include <iostream>
-#include <json/json.h>
 #include <sys/socket.h>
 #include <sys/un.h>
 #include <unistd.h>
+#include <vector>
 
 UdsServer::UdsServer(std::string socketPath, ISnapshotProvider &provider, std::chrono::milliseconds minInterval)
     : socketPath_(std::move(socketPath)), provider_(provider), minInterval_(minInterval)
@@ -115,17 +116,22 @@ void UdsServer::loop()
             continue;
         }
 
-        Json::Value snapshot = provider_.getSnapshot();
-        Json::StreamWriterBuilder builder;
-        builder["indentation"] = "";
-        std::string payload = Json::writeString(builder, snapshot);
-        payload.push_back('\n');
+        std::string payload = provider_.getSnapshot();
+        uint32_t payloadSize = static_cast<uint32_t>(payload.size());
+        uint32_t prefix = htonl(payloadSize);
 
-        const char *data = payload.c_str();
+        std::vector<char> frame;
+        frame.reserve(sizeof(prefix) + payload.size());
+        frame.insert(frame.end(), reinterpret_cast<const char *>(&prefix),
+                     reinterpret_cast<const char *>(&prefix) + sizeof(prefix));
+        frame.insert(frame.end(), payload.begin(), payload.end());
+
+        const char *data = frame.data();
         size_t total = 0;
-        while (total < payload.size())
+        size_t frameSize = frame.size();
+        while (total < frameSize)
         {
-            ssize_t n = send(clientFd, data + total, payload.size() - total, 0);
+            ssize_t n = send(clientFd, data + total, frameSize - total, 0);
             if (n < 0)
             {
                 std::cerr << "[Socket] send() failed: " << strerror(errno) << "\n";
@@ -134,16 +140,15 @@ void UdsServer::loop()
             total += static_cast<size_t>(n);
         }
 
-        std::cout << std::endl;
-
-        if (total == payload.size())
+        if (total == frameSize)
         {
-            std::cout << "[Socket] Sent JSON over UDS: " << payload << std::endl;
+            std::cout << "[Socket] Sent protobuf frame over UDS: " << payloadSize << " bytes payload + "
+                      << sizeof(prefix) << " bytes length prefix" << std::endl;
             lastSendTime_ = clock::now();
         }
         else
         {
-            std::cerr << "[Socket] Partial send over UDS: " << total << "/" << payload.size() << "\n";
+            std::cerr << "[Socket] Partial send over UDS: " << total << "/" << frameSize << "\n";
         }
 
         close(clientFd);

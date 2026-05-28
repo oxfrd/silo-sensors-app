@@ -34,5 +34,5 @@ class MonitoringService : public ISnapshotProvider
     void run();
     void stop();
     void start();
-    Json::Value getSnapshot() const override;
+    std::string getSnapshot() const override;
 };

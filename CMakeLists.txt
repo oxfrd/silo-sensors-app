@@ -11,6 +11,9 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Wpedantic")
 # Opcje budowania
 option(USE_REAL_SENSORS "Use real DS18B20 sensors (disable for mock)" ON)
 option(BUILD_DEBUG "Build with debug symbols" ON)
+option(PROTO_REPO_PATH "Local path to external protobuf repository" "")
+option(PROTO_REPO_GIT_URL "Git URL for external protobuf repository if PROTO_REPO_PATH is not provided" "https://github.com/oxfrd/silo-sensors-proto-msg.git")
+option(PROTO_REPO_GIT_TAG "Git tag/branch to checkout when fetching external protobuf repository" "main")
 
 # Debug configuration
 if(BUILD_DEBUG)
@@ -48,6 +51,8 @@ else()
     message(STATUS "Found jsoncpp: ${JSONCPP_LIBRARY}")
 endif()
 
+find_package(Protobuf REQUIRED)
+
 # Filesystem support (for C++17)
 find_package(Threads REQUIRED)
 
@@ -82,6 +87,35 @@ set(COMMUNICATION_SOURCES
     src/communication/udsServer.cpp
 )
 
+# External protobuf definitions repository
+get_filename_component(PROJECT_PARENT_DIR ${CMAKE_CURRENT_SOURCE_DIR} DIRECTORY)
+set(PROTO_REPO_DEFAULT_PATH "${PROJECT_PARENT_DIR}/silo-sensors-proto-msg")
+
+if(PROTO_REPO_GIT_URL)
+    include(FetchContent)
+    message(STATUS "Fetching external protobuf repository from ${PROTO_REPO_GIT_URL} (tag ${PROTO_REPO_GIT_TAG})")
+    FetchContent_Declare(
+        external_proto
+        GIT_REPOSITORY "${PROTO_REPO_GIT_URL}"
+        GIT_TAG "${PROTO_REPO_GIT_TAG}"
+    )
+    FetchContent_GetProperties(external_proto)
+    if(NOT external_proto_POPULATED)
+        FetchContent_MakeAvailable(external_proto)
+    endif()
+    set(PROTO_REPO_DIR "${external_proto_SOURCE_DIR}")
+elseif(PROTO_REPO_PATH)
+    set(PROTO_REPO_DIR "${PROTO_REPO_PATH}")
+elseif(EXISTS "${PROTO_REPO_DEFAULT_PATH}")
+    set(PROTO_REPO_DIR "${PROTO_REPO_DEFAULT_PATH}")
+else()
+    message(FATAL_ERROR "External protobuf repository not found. Set PROTO_REPO_PATH, add sibling repo 'silo-sensors-proto-msg', or set PROTO_REPO_GIT_URL.")
+endif()
+
+set(PROTO_FILE "${PROTO_REPO_DIR}/proto/snapshot.proto")
+message(STATUS "Using external protobuf definition: ${PROTO_FILE}")
+protobuf_generate_cpp(PROTO_SRCS PROTO_HDRS ${PROTO_FILE})
+
 set(MAIN_SOURCES
     src/main.cpp
 )
@@ -94,6 +128,7 @@ set(ALL_SOURCES
     ${ASSIGNMENTS_SOURCES}
     ${HISTORY_SOURCES}
     ${COMMUNICATION_SOURCES}
+    ${PROTO_SRCS}
 )
 
 # ============================================================================
@@ -163,6 +198,8 @@ target_include_directories(silo-monitor-sensors-app PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/include/history
     ${CMAKE_CURRENT_SOURCE_DIR}/include/communication
     ${JSONCPP_INCLUDE_DIRS}
+    ${Protobuf_INCLUDE_DIRS}
+    ${CMAKE_CURRENT_BINARY_DIR}
 )
 
 # ============================================================================
@@ -170,6 +207,7 @@ target_include_directories(silo-monitor-sensors-app PRIVATE
 # ============================================================================
 target_link_libraries(silo-monitor-sensors-app PRIVATE
     ${JSONCPP_LIBRARIES}
+    ${Protobuf_LIBRARIES}
     Threads::Threads
     stdc++fs
 )

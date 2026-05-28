@@ -1,6 +1,7 @@
 #include "monitoringService.h"
 #include "alarmManager.h"
 #include "sensors/movingAverageOutlierRejectingSensorFilter.h"
+#include "snapshot.pb.h"
 
 #include <chrono>
 #include <iostream>
@@ -98,9 +99,9 @@ void MonitoringService::start()
     running = true;
 }
 
-Json::Value MonitoringService::getSnapshot() const
+std::string MonitoringService::getSnapshot() const
 {
-    Json::Value root(Json::arrayValue);
+    silo::MonitoringSnapshot snapshot;
 
     std::vector<SensorData> dataCopy;
     {
@@ -110,14 +111,21 @@ Json::Value MonitoringService::getSnapshot() const
 
     for (const auto &sensorData : dataCopy)
     {
-        Json::Value item;
-        item["sensorId"] = sensorData.id;
-        item["temperature"] = sensorData.temp ? Json::Value(*sensorData.temp) : Json::Value(Json::nullValue);
-        item["alarmCode"] = sensorData.alarmCode ? Json::Value(*sensorData.alarmCode) : Json::Value(Json::nullValue);
-        root.append(item);
+        silo::SensorSnapshot *item = snapshot.add_sensors();
+        item->set_sensor_id(sensorData.id);
+        if (sensorData.temp)
+        {
+            item->set_temperature(*sensorData.temp);
+        }
+        if (sensorData.alarmCode)
+        {
+            item->set_alarm_code(*sensorData.alarmCode);
+        }
     }
 
-    return root;
+    std::string output;
+    snapshot.SerializeToString(&output);
+    return output;
 }
 
 bool MonitoringService::timeElapsed(std::chrono::steady_clock::time_point &last, std::chrono::milliseconds interval)
