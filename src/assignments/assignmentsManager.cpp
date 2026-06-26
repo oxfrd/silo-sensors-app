@@ -90,8 +90,11 @@ std::map<uint8_t, std::string> AssignmentsManager::get(bool fileReload)
 
 void AssignmentsManager::set(const std::map<uint8_t, std::string> &newAssignments)
 {
-    std::lock_guard<std::mutex> lock(mutex_);
-    assignments_ = newAssignments;
+    {
+        std::lock_guard<std::mutex> lock(mutex_);
+        assignments_ = newAssignments;
+    }
+
     save();
 }
 
