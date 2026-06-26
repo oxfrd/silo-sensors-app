@@ -1,5 +1,7 @@
 #include "monitoringService.h"
+#include <cstdlib>
 #include <iostream>
+#include <string>
 
 int main(int argc, char *argv[])
 {
@@ -16,8 +18,14 @@ int main(int argc, char *argv[])
 
     try
     {
+        std::string socketPath = "/run/silo-monitor.sock";
+        if (useMockedSensors)
+        {
+            socketPath = "/tmp/silo-monitor.sock";
+        }
+
         MonitoringService service(useMockedSensors);
-        UdsServer publisher("/run/silo-monitor.sock", service);
+        UdsServer publisher(socketPath, service);
 
         service.initialize();
         publisher.start();
