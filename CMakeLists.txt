@@ -11,9 +11,12 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Wpedantic")
 # Opcje budowania
 option(USE_REAL_SENSORS "Use real DS18B20 sensors (disable for mock)" ON)
 option(BUILD_DEBUG "Build with debug symbols" ON)
-option(PROTO_REPO_PATH "Local path to external protobuf repository" "")
-option(PROTO_REPO_GIT_URL "Git URL for external protobuf repository if PROTO_REPO_PATH is not provided" "https://github.com/oxfrd/silo-sensors-proto-msg.git")
-option(PROTO_REPO_GIT_TAG "Git tag/branch to checkout when fetching external protobuf repository" "main")
+unset(PROTO_REPO_PATH CACHE)
+set(PROTO_REPO_PATH "" CACHE PATH "Local path to external protobuf repository")
+unset(PROTO_REPO_GIT_URL CACHE)
+set(PROTO_REPO_GIT_URL "https://github.com/oxfrd/silo-sensors-proto-msg.git" CACHE STRING "Git URL for external protobuf repository if PROTO_REPO_PATH is not provided")
+unset(PROTO_REPO_GIT_TAG CACHE)
+set(PROTO_REPO_GIT_TAG "master" CACHE STRING "Git tag/branch to checkout when fetching external protobuf repository")
 
 # Debug configuration
 if(BUILD_DEBUG)
@@ -52,6 +55,7 @@ else()
 endif()
 
 find_package(Protobuf REQUIRED)
+find_package(Git REQUIRED)
 
 # Filesystem support (for C++17)
 find_package(Threads REQUIRED)
@@ -91,30 +95,99 @@ set(COMMUNICATION_SOURCES
 get_filename_component(PROJECT_PARENT_DIR ${CMAKE_CURRENT_SOURCE_DIR} DIRECTORY)
 set(PROTO_REPO_DEFAULT_PATH "${PROJECT_PARENT_DIR}/silo-sensors-proto-msg")
 
-if(PROTO_REPO_GIT_URL)
-    include(FetchContent)
-    message(STATUS "Fetching external protobuf repository from ${PROTO_REPO_GIT_URL} (tag ${PROTO_REPO_GIT_TAG})")
-    FetchContent_Declare(
-        external_proto
-        GIT_REPOSITORY "${PROTO_REPO_GIT_URL}"
-        GIT_TAG "${PROTO_REPO_GIT_TAG}"
-    )
-    FetchContent_GetProperties(external_proto)
-    if(NOT external_proto_POPULATED)
-        FetchContent_MakeAvailable(external_proto)
-    endif()
-    set(PROTO_REPO_DIR "${external_proto_SOURCE_DIR}")
-elseif(PROTO_REPO_PATH)
+if(NOT "${PROTO_REPO_PATH}" STREQUAL "")
     set(PROTO_REPO_DIR "${PROTO_REPO_PATH}")
+    set(PROTO_SNAPSHOT_FILE "${PROTO_REPO_DIR}/proto/snapshot.proto")
+    set(PROTO_ALARMS_FILE "${PROTO_REPO_DIR}/proto/alarms.proto")
+    message(STATUS "Using external protobuf definition: ${PROTO_SNAPSHOT_FILE}")
+    message(STATUS "Using external protobuf definition: ${PROTO_ALARMS_FILE}")
+    protobuf_generate_cpp(SNAPSHOT_PROTO_SRCS SNAPSHOT_PROTO_HDRS ${PROTO_SNAPSHOT_FILE})
+    protobuf_generate_cpp(ALARMS_PROTO_SRCS ALARMS_PROTO_HDRS ${PROTO_ALARMS_FILE})
+
+    set(PROTO_SRCS
+        ${SNAPSHOT_PROTO_SRCS}
+        ${ALARMS_PROTO_SRCS}
+    )
+    set(PROTO_HDRS
+        ${SNAPSHOT_PROTO_HDRS}
+        ${ALARMS_PROTO_HDRS}
+    )
+elseif(NOT "${PROTO_REPO_GIT_URL}" STREQUAL "")
+    set(PROTO_REPO_DIR "${CMAKE_CURRENT_BINARY_DIR}/silo-sensors-proto-msg")
+    if(NOT EXISTS "${PROTO_REPO_DIR}/.git")
+        if(PROTO_REPO_GIT_TAG AND NOT "${PROTO_REPO_GIT_TAG}" STREQUAL "")
+            message(STATUS "Cloning external protobuf repository from ${PROTO_REPO_GIT_URL} (tag ${PROTO_REPO_GIT_TAG})")
+            execute_process(
+                COMMAND "${GIT_EXECUTABLE}" clone --depth 1 --branch "${PROTO_REPO_GIT_TAG}" "${PROTO_REPO_GIT_URL}" "${PROTO_REPO_DIR}"
+                RESULT_VARIABLE PROTO_GIT_CLONE_RESULT
+                OUTPUT_VARIABLE PROTO_GIT_CLONE_OUTPUT
+                ERROR_VARIABLE PROTO_GIT_CLONE_ERROR
+            )
+        else()
+            message(STATUS "Cloning external protobuf repository from ${PROTO_REPO_GIT_URL} using the remote default branch")
+            execute_process(
+                COMMAND "${GIT_EXECUTABLE}" clone --depth 1 "${PROTO_REPO_GIT_URL}" "${PROTO_REPO_DIR}"
+                RESULT_VARIABLE PROTO_GIT_CLONE_RESULT
+                OUTPUT_VARIABLE PROTO_GIT_CLONE_OUTPUT
+                ERROR_VARIABLE PROTO_GIT_CLONE_ERROR
+            )
+        endif()
+        if(NOT PROTO_GIT_CLONE_RESULT EQUAL 0)
+            message(FATAL_ERROR "Failed to clone protobuf repository: ${PROTO_GIT_CLONE_ERROR}")
+        endif()
+    endif()
+    set(PROTO_SNAPSHOT_FILE "${PROTO_REPO_DIR}/proto/snapshot.proto")
+    set(PROTO_ALARMS_FILE "${PROTO_REPO_DIR}/proto/alarms.proto")
+    message(STATUS "Using external protobuf definition: ${PROTO_SNAPSHOT_FILE}")
+    message(STATUS "Using external protobuf definition: ${PROTO_ALARMS_FILE}")
+    protobuf_generate_cpp(SNAPSHOT_PROTO_SRCS SNAPSHOT_PROTO_HDRS ${PROTO_SNAPSHOT_FILE})
+    protobuf_generate_cpp(ALARMS_PROTO_SRCS ALARMS_PROTO_HDRS ${PROTO_ALARMS_FILE})
+
+    set(PROTO_SRCS
+        ${SNAPSHOT_PROTO_SRCS}
+        ${ALARMS_PROTO_SRCS}
+    )
+    set(PROTO_HDRS
+        ${SNAPSHOT_PROTO_HDRS}
+        ${ALARMS_PROTO_HDRS}
+    )
 elseif(EXISTS "${PROTO_REPO_DEFAULT_PATH}")
     set(PROTO_REPO_DIR "${PROTO_REPO_DEFAULT_PATH}")
+    set(PROTO_SNAPSHOT_FILE "${PROTO_REPO_DIR}/proto/snapshot.proto")
+    set(PROTO_ALARMS_FILE "${PROTO_REPO_DIR}/proto/alarms.proto")
+    message(STATUS "Using external protobuf definition: ${PROTO_SNAPSHOT_FILE}")
+    message(STATUS "Using external protobuf definition: ${PROTO_ALARMS_FILE}")
+    protobuf_generate_cpp(SNAPSHOT_PROTO_SRCS SNAPSHOT_PROTO_HDRS ${PROTO_SNAPSHOT_FILE})
+    protobuf_generate_cpp(ALARMS_PROTO_SRCS ALARMS_PROTO_HDRS ${PROTO_ALARMS_FILE})
+
+    set(PROTO_SRCS
+        ${SNAPSHOT_PROTO_SRCS}
+        ${ALARMS_PROTO_SRCS}
+    )
+    set(PROTO_HDRS
+        ${SNAPSHOT_PROTO_HDRS}
+        ${ALARMS_PROTO_HDRS}
+    )
+elseif(EXISTS "${PROTO_REPO_DEFAULT_PATH}")
+    set(PROTO_REPO_DIR "${PROTO_REPO_DEFAULT_PATH}")
+    set(PROTO_SNAPSHOT_FILE "${PROTO_REPO_DIR}/proto/snapshot.proto")
+    set(PROTO_ALARMS_FILE "${PROTO_REPO_DIR}/proto/alarms.proto")
+    message(STATUS "Using external protobuf definition: ${PROTO_SNAPSHOT_FILE}")
+    message(STATUS "Using external protobuf definition: ${PROTO_ALARMS_FILE}")
+    protobuf_generate_cpp(SNAPSHOT_PROTO_SRCS SNAPSHOT_PROTO_HDRS ${PROTO_SNAPSHOT_FILE})
+    protobuf_generate_cpp(ALARMS_PROTO_SRCS ALARMS_PROTO_HDRS ${PROTO_ALARMS_FILE})
+
+    set(PROTO_SRCS
+        ${SNAPSHOT_PROTO_SRCS}
+        ${ALARMS_PROTO_SRCS}
+    )
+    set(PROTO_HDRS
+        ${SNAPSHOT_PROTO_HDRS}
+        ${ALARMS_PROTO_HDRS}
+    )
 else()
     message(FATAL_ERROR "External protobuf repository not found. Set PROTO_REPO_PATH, add sibling repo 'silo-sensors-proto-msg', or set PROTO_REPO_GIT_URL.")
 endif()
-
-set(PROTO_FILE "${PROTO_REPO_DIR}/proto/snapshot.proto")
-message(STATUS "Using external protobuf definition: ${PROTO_FILE}")
-protobuf_generate_cpp(PROTO_SRCS PROTO_HDRS ${PROTO_FILE})
 
 set(MAIN_SOURCES
     src/main.cpp

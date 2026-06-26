@@ -119,7 +119,7 @@ std::string MonitoringService::getSnapshot() const
         }
         if (sensorData.alarmCode)
         {
-            item->set_alarm_code(*sensorData.alarmCode);
+            item->set_alarm_code(static_cast<silo::AlarmCode>(*sensorData.alarmCode));
         }
     }
 
